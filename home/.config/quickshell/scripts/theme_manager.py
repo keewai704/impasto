@@ -41,8 +41,12 @@ import greeting
 _replace = os.replace
 
 
+def nix_managed(path):
+    return os.path.realpath(path).startswith("/nix/store/")
+
+
 def _replace_unless_managed(source, target, *args, **kwargs):
-    if os.path.realpath(target).startswith("/nix/store/"):
+    if nix_managed(target):
         if os.path.isfile(source):
             os.unlink(source)
         raise PermissionError(f"{target} is managed by Nix")
@@ -115,6 +119,7 @@ GTK3_DIR = os.path.join(XDG_CONFIG_HOME, "gtk-3.0")
 GTK4_DIR = os.path.join(XDG_CONFIG_HOME, "gtk-4.0")
 GTK3_CSS_FILE = os.path.join(GTK3_DIR, "gtk.css")
 GTK4_CSS_FILE = os.path.join(GTK4_DIR, "gtk.css")
+GTK_COLORS_FILE = os.path.join(STATE_DIR, "gtk-colors.css")
 
 # GTK windows: the palette's background is the window ground and its surface
 # is anything raised (header bars, popovers, sidebars). The island's black is
@@ -278,7 +283,7 @@ VSCODIUM_ANSI = {
 # repository; changes made in the qt6ct GUI are overwritten on the next push.
 QT6CT_DIR = os.path.join(XDG_CONFIG_HOME, "qt6ct")
 QT6CT_CONFIG_FILE = os.path.join(QT6CT_DIR, "qt6ct.conf")
-QT6CT_COLORS_FILE = os.path.join(QT6CT_DIR, "colors", "impasto.conf")
+QT6CT_COLORS_FILE = os.path.join(STATE_DIR, "qt-palette.conf")
 
 # Fusion draws every widget from the palette; Kvantum would bring its own SVG
 # theme.
@@ -1466,14 +1471,19 @@ statusbar {{ border-top: 1px solid @borders; }}
 
 
 def write_gtk_theme(colors):
-    """Write both sheets into the GTK config directories.
+    """Export shared colours, then update GTK configs not owned by Nix.
 
-    Not guarded on a binary (there is no `gtk` command); the symlink check
-    still applies. GTK reads gtk.css once, so only newly started applications
-    pick it up.
+    Declarative themes can import the state fragment after their base CSS.
+    GTK reads gtk.css once, so newly started applications pick it up.
     """
+    ensure_state_dir()
+    with open(GTK_COLORS_FILE, "w", encoding="utf-8") as handle:
+        handle.write(build_gtk4_css(colors))
+
     for root, path, build in ((GTK4_DIR, GTK4_CSS_FILE, build_gtk4_css),
                               (GTK3_DIR, GTK3_CSS_FILE, build_gtk3_css)):
+        if nix_managed(path):
+            continue
         if os.path.islink(root):
             sys.stderr.write(f"{root} is a symlink, so GTK's colours are "
                              f"not written: run `./setup sync`, which "
@@ -1882,7 +1892,7 @@ def write_kde_colors(colors):
     tolerated. A file that cannot be parsed is left untouched. Skipped without
     kreadconfig6 (kconfig), since nothing would read the file.
     """
-    if not shutil.which("kreadconfig6"):
+    if nix_managed(KDEGLOBALS_FILE) or not shutil.which("kreadconfig6"):
         return
 
     parser = configparser.RawConfigParser(strict=False)
@@ -1912,16 +1922,16 @@ def write_kde_colors(colors):
 
 
 def write_qt6ct_theme(colors):
-    """Write qt6ct's colour scheme and config.
+    """Export a Qt palette and update qt6ct's config unless Nix owns it.
 
     Only newly started Qt applications pick up the change: qt6ct's directory
-    watcher does not repaint windows that are already open. Skipped when qt6ct
-    is not installed.
+    watcher does not repaint windows that are already open. The state palette
+    is also usable by a declarative qt5ct config without qt6ct installed.
     """
-    if not shutil.which("qt6ct"):
-        return
     for path, contents in ((QT6CT_COLORS_FILE, build_qt_colors(colors)),
                            (QT6CT_CONFIG_FILE, build_qt6ct_config())):
+        if nix_managed(path) or (path == QT6CT_CONFIG_FILE and not shutil.which("qt6ct")):
+            continue
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w", encoding="utf-8") as handle:

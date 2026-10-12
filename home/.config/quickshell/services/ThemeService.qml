@@ -75,7 +75,13 @@ QtObject {
 
     readonly property Process persistProcess: Process {}
 
-    readonly property Process terminalProcess: Process {}
+    readonly property Process terminalProcess: Process {
+        property var pending: null
+        onExited: {
+            if (pending)
+                root.pushTerminal(pending)
+        }
+    }
 
     // ── FONT ────────────────────────────────────────────────────────────────
     //
@@ -157,6 +163,11 @@ QtObject {
     function pushTerminal(colors: var): void {
         if (!colors)
             return
+        if (root.terminalProcess.running) {
+            root.terminalProcess.pending = colors
+            return
+        }
+        root.terminalProcess.pending = null
         root.terminalProcess.command = [root.script, "push-terminal-palette",
                                         JSON.stringify(colors)]
         root.terminalProcess.running = true

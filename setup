@@ -1290,6 +1290,9 @@ verb_check() {
         "${files[@]}"
     say 'syntax ok'
 
+    section 'theme integration'
+    python3 -m unittest discover -s tests
+
     # Arch calls it luac; Debian and Ubuntu, where CI runs, may only have
     # luac5.4 unless the alternatives point the plain name at it.
     section lua

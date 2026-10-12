@@ -7,6 +7,28 @@ IPC and tray fixes, and protection for Nix-managed configuration files.
 Use [Island](https://github.com/keewai704/Island) for NixOS packaging and
 installation; it generates the Papirus panel icon index during the build.
 
+### Integration with declarative themes
+
+Impasto's palette and terminal font can take precedence over Stylix or Home
+Manager without replacing their managed configuration files. It exports these
+fragments under `$XDG_STATE_HOME/quickshell` (normally `~/.local/state/quickshell`):
+
+- `gtk-colors.css`: import after the base GTK stylesheet. Its named colours work
+  with libadwaita and adw-gtk3; Stylix can append the import through
+  `stylix.targets.gtk.extraCss`.
+- `qt-palette.conf`: use as qt5ct/qt6ct's `Appearance.color_scheme_path`, with
+  `custom_palette=true` and the Fusion style. Kvantum paints its own theme and
+  does not follow this palette.
+- `kitty-palette.conf` and `kitty-font.conf`: include after the base terminal
+  configuration. Enable `allow_remote_control socket-only` and
+  `listen_on unix:${XDG_RUNTIME_DIR}/kitty.sock` for updates to running terminals.
+
+The selected palette remains in impasto's state and is exported again at shell
+startup. GTK and Qt applications may need to be restarted to read new colours.
+The base theme can continue supplying fonts, icons and defaults that impasto
+does not override. Keep the shell's palette selection unset in declarative
+configuration if choices made in impasto should survive a shell restart.
+
 The documentation below describes upstream impasto.
 
 <p align="center">
