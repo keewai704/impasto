@@ -140,13 +140,14 @@ class ThemeTemplateTests(unittest.TestCase):
         (self.templates / "fcitx5").mkdir()
         for name in ("theme.conf", "panel.svg"):
             (self.templates / "fcitx5" / name).write_text("#@impasto-accent@")
-        with patch.object(theme.shutil, "which", return_value="fcitx5-remote"), \
+        with patch.object(theme.shutil, "which", return_value="busctl"), \
                 patch.object(theme.subprocess, "run") as reload:
             theme.render_theme_templates(self.colors)
             theme.render_theme_templates(self.colors)
             self.assertEqual(reload.call_count, 1)
             self.colors["accent"] = "#654321"
-            reload.side_effect = subprocess.TimeoutExpired("fcitx5-remote", 5)
+            self.assertIn("ReloadAddonConfig", reload.call_args.args[0])
+            reload.side_effect = subprocess.TimeoutExpired("busctl", 5)
             with contextlib.redirect_stderr(io.StringIO()) as errors:
                 theme.render_theme_templates(self.colors)
             self.assertIn("Cannot reload fcitx5 theme", errors.getvalue())

@@ -669,9 +669,12 @@ def render_theme_templates(colors):
             except (OSError, ValueError) as error:
                 success = False
                 sys.stderr.write(f"Cannot render {source}: {error}\n")
-    if reload_fcitx and shutil.which("fcitx5-remote"):
+    if reload_fcitx and shutil.which("busctl"):
         try:
-            subprocess.run(["fcitx5-remote", "--check", "-r"], capture_output=True, timeout=5)
+            subprocess.run(["busctl", "--user", "--auto-start=no", "call",
+                            "org.fcitx.Fcitx5", "/controller", "org.fcitx.Fcitx.Controller1",
+                            "ReloadAddonConfig", "s", "classicui"],
+                           capture_output=True, timeout=5)
         except (OSError, subprocess.SubprocessError) as error:
             sys.stderr.write(f"Cannot reload fcitx5 theme: {error}\n")
     return success
