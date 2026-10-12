@@ -29,6 +29,21 @@ The base theme can continue supplying fonts, icons and defaults that impasto
 does not override. Keep the shell's palette selection unset in declarative
 configuration if choices made in impasto should survive a shell restart.
 
+Other declarative themes can provide text templates in
+`$XDG_CONFIG_HOME/quickshell/theme-templates`. Every palette change renders them
+under `$XDG_STATE_HOME/quickshell/themes`, preserving their relative paths.
+Use `#@impasto-accent@` for a hex colour or `@impasto-accent-rgb@` for an RGB
+triplet; the other palette keys work the same way. Point an application's
+configuration at the rendered file with a writable external symlink, while Nix
+continues managing the template's layout, fonts and other settings. CSS, INI and
+SVG templates let existing Steam, Legcord and fcitx5 themes share this path.
+Changed files under `fcitx5/` trigger a configuration reload when fcitx5 is running.
+
+The active palette is saved in `palette.json`. A Home Manager activation can run
+`theme_manager.py render-themes /path/to/fallback-palette.json` after linking its
+templates to refresh the files immediately. The saved impasto palette takes
+precedence; the fallback is used only before the first palette export.
+
 The documentation below describes upstream impasto.
 
 <p align="center">

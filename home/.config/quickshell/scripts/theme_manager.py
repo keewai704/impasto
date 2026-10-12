@@ -28,6 +28,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 from xml.sax.saxutils import escape
 
@@ -71,6 +72,9 @@ STATE_FILE = os.path.join(STATE_DIR, "state.json")
 TERMINAL_PALETTE_FILE = os.path.join(STATE_DIR, "kitty-palette.conf")
 # Separate from the palette fragment, which is rewritten whole on every push.
 TERMINAL_FONT_FILE = os.path.join(STATE_DIR, "kitty-font.conf")
+PALETTE_FILE = os.path.join(STATE_DIR, "palette.json")
+THEME_TEMPLATES_DIR = os.path.join(XDG_CONFIG_HOME, "quickshell", "theme-templates")
+RENDERED_THEMES_DIR = os.path.join(STATE_DIR, "themes")
 
 # kitty appends `-<pid>` to `listen_on`, so this globs every running
 # instance. Reaching none is fine: new terminals read the fragment anyway.
@@ -608,6 +612,67 @@ def rgb_to_hex(red, green, blue):
 def hex_to_rgb(value):
     value = value.lstrip("#")
     return tuple(int(value[index:index + 2], 16) for index in (0, 2, 4))
+
+
+def write_if_changed(path, contents):
+    try:
+        with open(path, encoding="utf-8") as handle:
+            if handle.read() == contents:
+                return False
+    except FileNotFoundError:
+        pass
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
+                                         dir=os.path.dirname(path), delete=False) as handle:
+            temporary = handle.name
+            handle.write(contents)
+        os.replace(temporary, path)
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
+    return True
+
+
+def render_theme_template(template, colors):
+    def replace(match):
+        name, rgb = match.groups()
+        value = colors.get(name, "")
+        if not isinstance(value, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+            raise ValueError(f"Missing or invalid palette colour: {name}")
+        return ", ".join(map(str, hex_to_rgb(value))) if rgb else value[1:]
+    return re.sub(r"@impasto-(\w+)(-rgb)?@", replace, template)
+
+
+def render_theme_templates(colors):
+    """Render declarative CSS, INI and SVG templates without editing their sources."""
+    reload_fcitx = False
+    success = True
+    for directory, _, names in os.walk(THEME_TEMPLATES_DIR, followlinks=True):
+        for name in sorted(names):
+            source = os.path.join(directory, name)
+            relative = os.path.relpath(source, THEME_TEMPLATES_DIR)
+            target = os.path.join(RENDERED_THEMES_DIR, relative)
+            try:
+                with open(source, encoding="utf-8") as handle:
+                    contents = render_theme_template(handle.read(), colors)
+                if write_if_changed(target, contents) and relative.startswith("fcitx5/"):
+                    reload_fcitx = True
+            except (OSError, ValueError) as error:
+                success = False
+                sys.stderr.write(f"Cannot render {source}: {error}\n")
+    if reload_fcitx and shutil.which("fcitx5-remote"):
+        try:
+            subprocess.run(["fcitx5-remote", "--check", "-r"], capture_output=True, timeout=5)
+        except (OSError, subprocess.SubprocessError) as error:
+            sys.stderr.write(f"Cannot reload fcitx5 theme: {error}\n")
+    return success
+
+
+def export_theme_templates(colors):
+    write_if_changed(PALETTE_FILE, json.dumps(colors, indent=2) + "\n")
+    render_theme_templates(colors)
 
 
 def mix(value, other, amount):
@@ -4096,6 +4161,7 @@ def main():
                "set-wallpaper <path> [transition] | "
                "restore | extract-colors [path] | set-theme <id> | "
                "push-terminal-palette <json> | push-terminal-font <family> | "
+               "render-themes <fallback.json> | "
                "apply-vscodium [json] | apply-thunar | apply-vesktop")
     if len(sys.argv) < 2:
         sys.stderr.write(f"Usage: theme_manager.py {actions}\n")
@@ -4126,6 +4192,7 @@ def main():
         set_theme(argument)
     elif action == "push-terminal-palette" and argument:
         colors = json.loads(argument)
+        export_theme_templates(colors)
         push_terminal_palette(colors)
         write_greetings(colors)
         write_btop_theme(colors)
@@ -4144,6 +4211,11 @@ def main():
         refresh_spotify()
     elif action == "push-terminal-font" and argument:
         push_terminal_font(argument)
+    elif action == "render-themes" and argument:
+        with open(PALETTE_FILE if os.path.isfile(PALETTE_FILE) else argument,
+                  encoding="utf-8") as handle:
+            if not render_theme_templates(json.load(handle)):
+                sys.exit(1)
     elif action == "apply-vscodium":
         colors = json.loads(argument) if argument else (
             extract_colors(get_current_wallpaper()) or {})

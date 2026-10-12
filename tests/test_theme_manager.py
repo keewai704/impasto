@@ -2,9 +2,11 @@ import configparser
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import sys
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -85,6 +87,79 @@ class ThemeIntegrationTests(unittest.TestCase):
             theme.write_qt6ct_theme(self.colors)
         self.assertTrue((self.state / "qt-palette.conf").is_file())
         self.assertFalse((self.qt / "qt6ct.conf").exists())
+
+
+class ThemeTemplateTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.templates = self.root / "templates"
+        self.rendered = self.root / "rendered"
+        self.templates.mkdir()
+        paths = patch.multiple(theme, THEME_TEMPLATES_DIR=str(self.templates),
+                               RENDERED_THEMES_DIR=str(self.rendered),
+                               PALETTE_FILE=str(self.root / "palette.json"))
+        paths.start()
+        self.addCleanup(paths.stop)
+        self.colors = {"accent": "#123456", "text": "#ffffff"}
+
+    def test_templates_keep_layout_and_sources_while_palette_changes(self):
+        source = self.root / "managed.css"
+        source.write_text("@import url(base.css);\n:root { --accent: #@impasto-accent@; "
+                          "--rgb: @impasto-accent-rgb@; font-family: Existing; }")
+        (self.templates / "client.css").symlink_to(source)
+        theme.export_theme_templates(self.colors)
+        result = self.rendered / "client.css"
+        app_config = self.root / "quick.css"
+        app_config.symlink_to(result)
+        self.colors["accent"] = "#654321"
+        theme.export_theme_templates(self.colors)
+        self.assertTrue(app_config.is_symlink())
+        self.assertIn("--accent: #654321; --rgb: 101, 67, 33;", app_config.read_text())
+        self.assertIn("font-family: Existing", app_config.read_text())
+        self.assertIn("@import url(base.css);", app_config.read_text())
+        self.assertIn("@impasto-accent@", source.read_text())
+        self.assertEqual(json.loads((self.root / "palette.json").read_text()), self.colors)
+        modified = result.stat().st_mtime_ns
+        theme.export_theme_templates(self.colors)
+        self.assertEqual(result.stat().st_mtime_ns, modified)
+
+    def test_invalid_palette_leaves_the_previous_theme_intact(self):
+        (self.templates / "client.css").write_text("body { color: #@impasto-accent@; }")
+        theme.render_theme_templates(self.colors)
+        previous = (self.rendered / "client.css").read_text()
+        with contextlib.redirect_stderr(io.StringIO()) as errors:
+            theme.render_theme_templates({"accent": "red; invalid CSS"})
+        self.assertIn("Missing or invalid palette colour", errors.getvalue())
+        self.assertEqual((self.rendered / "client.css").read_text(), previous)
+
+    def test_fcitx_reloads_once_for_changed_files_and_tolerates_timeout(self):
+        (self.templates / "fcitx5").mkdir()
+        for name in ("theme.conf", "panel.svg"):
+            (self.templates / "fcitx5" / name).write_text("#@impasto-accent@")
+        with patch.object(theme.shutil, "which", return_value="fcitx5-remote"), \
+                patch.object(theme.subprocess, "run") as reload:
+            theme.render_theme_templates(self.colors)
+            theme.render_theme_templates(self.colors)
+            self.assertEqual(reload.call_count, 1)
+            self.colors["accent"] = "#654321"
+            reload.side_effect = subprocess.TimeoutExpired("fcitx5-remote", 5)
+            with contextlib.redirect_stderr(io.StringIO()) as errors:
+                theme.render_theme_templates(self.colors)
+            self.assertIn("Cannot reload fcitx5 theme", errors.getvalue())
+        self.assertEqual((self.rendered / "fcitx5/panel.svg").read_text(), "#654321")
+
+    def test_activation_prefers_saved_palette_over_fallback(self):
+        (self.templates / "client.css").write_text("#@impasto-accent@")
+        fallback = self.root / "fallback.json"
+        fallback.write_text(json.dumps({"accent": "#abcdef"}))
+        with patch.object(sys, "argv", ["theme_manager.py", "render-themes", str(fallback)]):
+            theme.main()
+            self.assertEqual((self.rendered / "client.css").read_text(), "#abcdef")
+            theme.export_theme_templates(self.colors)
+            theme.main()
+        self.assertEqual((self.rendered / "client.css").read_text(), "#123456")
 
 
 if __name__ == "__main__":
