@@ -466,6 +466,11 @@ QtObject {
     function launchDesktop(desktopId: string): void {
         if (!desktopId)
             return
-        Quickshell.execDetached(["gtk-launch", desktopId])
+        // execDetached survives a config reload, but still inherits the shell's
+        // systemd cgroup. A separate scope keeps apps alive when the shell's
+        // service stops or restarts, while preserving the launch environment.
+        Quickshell.execDetached(["systemd-run", "--user", "--scope", "--quiet",
+            "--collect", "--slice=app.slice", "--expand-environment=no",
+            "--", "gtk-launch", desktopId])
     }
 }
