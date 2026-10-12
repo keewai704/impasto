@@ -10,6 +10,8 @@
 import QtQuick
 import QtQuick.Effects
 
+import "panel-icons.js" as PanelIcons
+
 // An item names its icon, and the shell's icon theme draws named panel icons
 // dark, for a light bar. Papirus-Dark carries tray icons of its own, light
 // ones, so a named icon is looked up there first and the item's own is the
@@ -26,7 +28,9 @@ Item {
         return found ? found[1] : ""
     }
 
-    readonly property string panelIcon: root.named !== ""
+    // Only names the theme has: probing a missing file logs a warning every
+    // time the item changes its icon.
+    readonly property string panelIcon: PanelIcons.names[root.named] === true
         ? `file:///usr/share/icons/Papirus-Dark/22x22/panel/${root.named}.svg` : ""
 
     property bool fallback: false
@@ -41,8 +45,10 @@ Item {
         source: root.panelIcon !== "" && !root.fallback ? root.panelIcon : root.icon
         visible: false
         onStatusChanged: {
+            // Deferred: switching the source from inside its own status
+            // change is a binding loop.
             if (status === Image.Error && !root.fallback)
-                root.fallback = true
+                Qt.callLater(() => root.fallback = true)
         }
     }
 

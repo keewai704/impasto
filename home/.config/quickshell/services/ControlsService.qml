@@ -296,12 +296,6 @@ Singleton {
             action: () => AudioService.toggleMute()
         },
         Toggle {
-            key: "dock"; icon: "󱂠"; label: "Dock"
-            detail: SettingsService.dockEnabled ? "Shown" : "Hidden"
-            active: SettingsService.dockEnabled
-            action: () => SettingsService.set("dockEnabled", !SettingsService.dockEnabled)
-        },
-        Toggle {
             key: "notch"; icon: "󰌢"; label: "Notch"
             detail: SettingsService.islandAttached ? "Attached" : "Floating"
             active: SettingsService.islandAttached

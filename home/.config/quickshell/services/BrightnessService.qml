@@ -1,9 +1,9 @@
 // ╭──────────────────────────────────────────────────────────────────────────╮
 // │                                                                          │
 // │   B R I G H T N E S S   S E R V I C E                                    │
-// │   brightness per screen · the backlight on sysfs, monitors over DDC/CI   │
+// │   brightness per screen · through the hypr-brightness daemon             │
 // │                                                                          │
-// │   github.com/andreumassanet/impasto                                      │
+// │   Island's replacement for impasto's brightnessctl and ddcutil service   │
 // │                                                                          │
 // ╰──────────────────────────────────────────────────────────────────────────╯
 
@@ -16,16 +16,17 @@ import Quickshell.Io
 
 import "../theme"
 
-// One entry per screen. The laptop panel is the backlight, watched on sysfs
-// so the OSD also reacts to the hardware keys, and set through brightnessctl.
-// An external monitor is set over DDC/CI with ddcutil, on the I2C bus that
-// `ddcutil detect` pairs with its connector. The keys and every single
-// reading follow the focused screen, or the first one that can be dimmed.
+// One entry per screen the daemon can dim: the laptop panel through logind,
+// a monitor over DDC/CI. The daemon keeps the devices open and replies at
+// once, so a held key or a dragged slider never waits on the hardware. Its
+// event stream also carries levels set from elsewhere, such as the CLI. The
+// keys and every single reading follow the focused screen, or the first one
+// that can be dimmed.
 Singleton {
     id: root
 
-    // A level was set here, or the backlight moved on its own. A reading
-    // taken off a monitor is not a change and does not emit it.
+    // A level was set here or by another client. A reading taken off the
+    // hardware is not a change and does not emit it.
     signal adjusted(var display)
 
     readonly property var displays: root.variants.instances
@@ -63,10 +64,15 @@ Singleton {
     }
 
     // A monitor's own buttons change it without telling anyone, so whatever
-    // shows the levels asks for them again when it opens.
+    // shows the levels asks for them again when it opens. A hardware read
+    // takes a while, so it goes on its own connection and the answer comes
+    // back as an event.
     function refresh(): void {
+        if (!root.reader.connected)
+            return
         for (const display of root.displays)
-            display.read()
+            root.reader.write(`refresh ${display.name}\n`)
+        root.reader.flush()
     }
 
     function isPanel(name: string): bool {
@@ -74,225 +80,173 @@ Singleton {
     }
 
 
-    // ── BACKLIGHT ───────────────────────────────────────────────────────────
-    //
-    // The device (intel_backlight, amdgpu_bl0, …) is discovered once.
+    // ── DAEMON ──────────────────────────────────────────────────────────────
 
-    property string device: ""
-    property int raw: 0
-    property int maximum: 0
+    readonly property string socketPath: Quickshell.env("HYPR_BRIGHTNESS_SOCKET")
+        || `${Quickshell.env("XDG_RUNTIME_DIR")}/hypr-brightness.sock`
 
-    readonly property int backlightPercent: root.maximum > 0
-        ? Math.round(root.raw / root.maximum * 100) : 0
+    // Every output's last state, by name, and the order they came in.
+    property var states: ({})
+    property var names: []
 
-    onRawChanged: {
-        const panel = root.displays.find(display => display.backlight)
-        if (panel)
-            root.adjusted(panel)
+    // The commands sent and not yet answered, oldest first: every command
+    // has exactly one reply, and events are told apart by `event`.
+    property var sent: []
+
+    function send(command: string, output: string): bool {
+        if (!root.connection.connected)
+            return false
+        root.sent.push(output)
+        root.connection.write(`${command}\n`)
+        root.connection.flush()
+        return true
     }
 
-    readonly property Process discovery: Process {
-        command: ["sh", "-c", "ls -1 /sys/class/backlight/ 2>/dev/null | head -1"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const name = text.trim()
-                if (name !== "")
-                    root.device = name
+    function displayFor(name: string): var {
+        return root.displays.find(display => display.name === name) ?? null
+    }
+
+    function setOutputs(outputs: var): void {
+        const states = {}
+        for (const state of outputs)
+            states[state.output] = state
+        root.states = states
+        root.names = outputs.map(state => state.output)
+        for (const display of root.displays)
+            display.apply(states[display.name], false)
+    }
+
+    function receive(line: string): void {
+        let message
+        try {
+            message = JSON.parse(line)
+        } catch (e) {
+            return
+        }
+        if (message.event === "outputs") {
+            root.setOutputs(message.outputs)
+        } else if (message.event === "brightness" || message.event === "focus") {
+            if (!(message.output in root.states)) {
+                root.names = root.names.concat([message.output])
+                root.states[message.output] = message
+            }
+            root.displayFor(message.output)?.apply(message,
+                message.event === "brightness" && message.source === "user")
+        } else if ("ok" in message) {
+            const output = root.sent.shift()
+            if (message.ok && message.outputs)
+                root.setOutputs(message.outputs)
+            else if (message.ok && output)
+                root.displayFor(output)?.answered(message)
+        }
+    }
+
+    readonly property Socket connection: Socket {
+        path: root.socketPath
+        connected: true
+        parser: SplitParser {
+            onRead: line => root.receive(line)
+        }
+        onConnectedChanged: {
+            root.sent = []
+            if (connected) {
+                root.send("watch", "")
+                root.send("status", "")
+            } else {
+                root.setOutputs([])
             }
         }
     }
 
-    readonly property FileView maxView: FileView {
-        path: root.device === "" ? "" : `/sys/class/backlight/${root.device}/max_brightness`
-        onLoaded: root.maximum = parseInt(text().trim()) || 0
+    readonly property Socket reader: Socket {
+        path: root.socketPath
+        connected: true
+        parser: SplitParser {}
     }
 
-    readonly property FileView levelView: FileView {
-        path: root.device === "" ? "" : `/sys/class/backlight/${root.device}/brightness`
-        watchChanges: true
-        onLoaded: root.raw = parseInt(text().trim()) || 0
-        onFileChanged: reload()
-    }
-
-
-    // ── DDC ─────────────────────────────────────────────────────────────────
-    //
-    // Connector → I2C bus. A laptop panel never answers DDC, so a desk with
-    // nothing else plugged in never runs ddcutil at all.
-
-    property var buses: ({})
-
-    readonly property bool external: Quickshell.screens.some(screen => !root.isPanel(screen.name))
-
-    function detect(): void {
-        if (!root.external) {
-            root.buses = ({})
-            return
-        }
-        if (root.detector.running) {
-            root.redetect.restart()
-            return
-        }
-        root.detector.running = true
-    }
-
-    // `--brief` prints one block per display, and only a "Display N" block
-    // answered over DDC. Its connector is "card1-DP-1" where Hyprland says
-    // "DP-1".
-    function parse(text: string): var {
-        const found = {}
-        for (const block of text.split(/\n\s*\n/)) {
-            if (!/^Display \d+/.test(block.trim()))
-                continue
-            const bus = block.match(/I2C bus:\s*\/dev\/i2c-(\d+)/)
-            const connector = block.match(/DRM connector:\s*card\d+-(\S+)/)
-            if (bus && connector)
-                found[connector[1]] = bus[1]
-        }
-        return found
-    }
-
-    readonly property Process detector: Process {
-        command: ["sh", "-c", "command -v ddcutil >/dev/null && exec ddcutil detect --brief"]
-        stdout: StdioCollector {
-            onStreamFinished: root.buses = root.parse(text)
+    // The daemon starts with the session and restarts on failure; until it
+    // listens, try again every second.
+    readonly property Timer reconnect: Timer {
+        interval: 1000
+        repeat: true
+        running: !root.connection.connected || !root.reader.connected
+        onTriggered: {
+            root.connection.connected = true
+            root.reader.connected = true
         }
     }
-
-    // Plugging a screen in changes the list more than once.
-    readonly property Timer redetect: Timer {
-        interval: 1500
-        onTriggered: root.detect()
-    }
-
-    readonly property Connections hotplug: Connections {
-        target: Quickshell
-        function onScreensChanged(): void { root.redetect.restart() }
-    }
-
-    Component.onCompleted: root.detect()
 
 
     // ── SCREENS ─────────────────────────────────────────────────────────────
 
     readonly property Variants variants: Variants {
-        model: Quickshell.screens
+        model: root.names
 
         QtObject {
             id: display
 
-            required property ShellScreen modelData
+            required property string modelData
 
-            // Null for a moment when the screen is unplugged.
-            readonly property string name: display.modelData?.name ?? ""
+            readonly property string name: display.modelData
+            readonly property ShellScreen screen: Quickshell.screens
+                .find(screen => screen.name === display.name) ?? null
             readonly property bool panel: root.isPanel(display.name)
+                || display.backend === "backlight"
             readonly property string title: display.panel
-                ? "Built-in" : (display.modelData?.model || display.name)
-            readonly property string bus: display.panel ? "" : (root.buses[display.name] ?? "")
+                ? "Built-in" : (display.screen?.model || display.name)
 
-            // The panel's. A lone screen with no DDC bus keeps it too, which
-            // is how a monitor driven by the ddcci kernel module shows up.
-            readonly property bool backlight: root.maximum > 0
-                && (display.panel || (display.bus === "" && Quickshell.screens.length === 1))
-
-            // Over DDC: the last level read or asked for, the monitor's own
-            // maximum, and whether the last reading came back at all.
-            property int level: 0
-            property int ceiling: 0
-            property bool answering: false
-
-            readonly property bool available: display.backlight
-                || (display.bus !== "" && display.answering)
-            readonly property int percent: display.backlight ? root.backlightPercent : display.level
+            property string backend: ""
+            property bool available: false
+            property int percent: 0
             readonly property string icon: root.iconFor(display.percent)
 
-            // Asked for and not yet written, or -1.
-            property int wanted: -1
-            property int written: -1
+            // Levels sent and not yet answered. Until the last one is, the
+            // daemon's echo of an older one would pull the level back.
+            property int pending: 0
+
+            function apply(state: var, user: bool): void {
+                if (!state)
+                    return
+                display.backend = state.backend
+                display.available = state.available
+                if (display.pending > 0 || state.percent === display.percent)
+                    return
+                display.percent = state.percent
+                if (user)
+                    root.adjusted(display)
+            }
+
+            function answered(state: var): void {
+                display.pending = Math.max(0, display.pending - 1)
+                if (display.pending === 0)
+                    display.apply(state, false)
+            }
 
             function setPercent(value: int): void {
                 if (!display.available)
                     return
                 const clamped = Math.max(1, Math.min(100, value))
-                if (clamped === (display.wanted >= 0 ? display.wanted : display.percent))
+                if (clamped === display.percent)
                     return
-                display.wanted = clamped
-                // The backlight reports itself through sysfs.
-                if (!display.backlight) {
-                    display.level = display.wanted
-                    root.adjusted(display)
-                }
-                display.flush()
+                if (!root.send(`set ${clamped} ${display.name}`, display.name))
+                    return
+                display.percent = clamped
+                display.pending++
+                root.adjusted(display)
             }
 
-            // From the level last asked for, so a held key does not step
-            // from a reading that has not caught up. At either end it writes
-            // nothing, and still shows where it stopped.
+            // From the level last asked for, so a held key steps on at once.
+            // At either end it writes nothing, and still shows where it
+            // stopped.
             function step(delta: int): void {
-                const from = display.wanted >= 0 ? display.wanted : display.percent
+                const from = display.percent
                 if (Math.max(1, Math.min(100, from + delta)) === from)
                     root.adjusted(display)
                 else
                     display.setPercent(from + delta)
             }
 
-            // One write at a time. A DDC write takes a tenth of a second or
-            // more and a slider asks faster than that, so only the newest
-            // level waits.
-            function flush(): void {
-                if (display.wanted < 0 || display.writer.running || display.reader.running)
-                    return
-                display.written = display.wanted
-                display.writer.command = display.backlight
-                    ? ["brightnessctl", "--quiet", "set", `${display.written}%`]
-                    : ["ddcutil", "--bus", display.bus, "--noverify", "--skip-ddc-checks",
-                       "setvcp", "10", `${Math.round(display.written / 100 * display.ceiling)}`]
-                display.writer.running = true
-            }
-
-            function read(): void {
-                if (display.bus === "" || display.reader.running || display.writer.running)
-                    return
-                display.reader.command = ["ddcutil", "--bus", display.bus, "--skip-ddc-checks",
-                                          "getvcp", "10", "--brief"]
-                display.reader.running = true
-            }
-
-            // A failed write is not retried: the monitor is read instead,
-            // and one that does not answer that either drops out.
-            readonly property Process writer: Process {
-                onExited: code => {
-                    if (display.wanted === display.written || (code !== 0 && !display.backlight))
-                        display.wanted = -1
-                    if (code !== 0 && !display.backlight)
-                        Qt.callLater(display.read)
-                    else
-                        Qt.callLater(display.flush)
-                }
-            }
-
-            // "VCP 10 C <level> <maximum>"
-            readonly property Process reader: Process {
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        const words = text.trim().split(/\s+/)
-                        const level = parseInt(words[3])
-                        const maximum = parseInt(words[4])
-                        display.answering = words[0] === "VCP" && words[2] === "C"
-                            && level >= 0 && maximum > 0
-                        if (!display.answering)
-                            return
-                        display.ceiling = maximum
-                        if (display.wanted < 0)
-                            display.level = Math.round(level / maximum * 100)
-                    }
-                }
-                onExited: Qt.callLater(display.flush)
-            }
-
-            onBusChanged: display.read()
-            Component.onCompleted: display.read()
+            Component.onCompleted: display.apply(root.states[display.name], false)
         }
     }
 }

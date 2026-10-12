@@ -566,8 +566,8 @@ Singleton {
         property var islandActivitiesSeen: null
 
         // One of `chipShapes` and one of `chipFigures`.
-        property string chipShape: "icon"
-        property string chipFigure: "on"
+        property string chipShape: "ring"
+        property string chipFigure: "hover"
 
         property int launcherResults: 9
 
@@ -774,9 +774,9 @@ Singleton {
 
         // ── DOCK ────────────────────────────────────────────────────────
         //
-        // An empty dock is not drawn, so enabling it by default costs
-        // nothing on a fresh install.
-        property bool dockEnabled: true
+        // Island draws no dock; off, so nothing keeps room for one. The pins
+        // below still order the launcher.
+        property bool dockEnabled: false
 
         // Pinned desktop entry ids, in order. Name, icon and command are
         // read from the entry.

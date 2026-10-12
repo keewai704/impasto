@@ -1,3 +1,14 @@
+## Island fork
+
+This fork of [impasto](https://github.com/andreumassanet/impasto) carries
+Island's shell changes: Duo status rings, clock styling, no dock,
+[hypr-brightness](https://github.com/keewai704/hypr-brightness) integration,
+IPC and tray fixes, and protection for Nix-managed configuration files.
+Use [Island](https://github.com/keewai704/Island) for NixOS packaging and
+installation; it generates the Papirus panel icon index during the build.
+
+The documentation below describes upstream impasto.
+
 <p align="center">
   <img src=".github/assets/banner.jpg" alt="impasto — the island, become the mark, over a painting of Mount Fuji" width="100%">
 </p>

@@ -26,6 +26,13 @@ Scope {
     // The live bar's island, for the panels.
     property var island: null
 
+    // Outside the handlers: a handler's properties are offered over IPC, which
+    // carries no lists.
+    readonly property var taskStates: ["todo", "doing", "done"]
+    readonly property var panelNames: ["launcher", "controls", "overview", "appearance", "palette",
+        "stats", "session", "pet", "games", "notes", "board", "keys", "packages",
+        "machines", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight"]
+
     function ok(extra: var): string {
         return JSON.stringify(Object.assign({ ok: true }, extra ?? ({})))
     }
@@ -194,22 +201,20 @@ Scope {
     IpcHandler {
         target: "task"
 
-        readonly property var states: ["todo", "doing", "done"]
-
         function add(text: string, due: string, state: string, notes: string): string {
             if (!text)
                 return root.fail("a task needs some text")
             const when = root.day(due)
             if (when === null)
                 return root.fail(`not a date: "${due}" (try today, tomorrow, fri, 12 oct or 2026-10-12)`)
-            if (state && states.indexOf(state) < 0)
+            if (state && root.taskStates.indexOf(state) < 0)
                 return root.fail(`not a state: "${state}" (todo, doing or done)`)
             const key = TasksService.add(text, when, state || "todo", notes || "")
             return root.ok({ key: key, due: when })
         }
 
         function list(state: string): string {
-            if (state && states.indexOf(state) < 0)
+            if (state && root.taskStates.indexOf(state) < 0)
                 return root.fail(`not a state: "${state}" (todo, doing or done)`)
             const rows = state ? TasksService.inState(state) : TasksService.tasks
             return root.ok({ tasks: rows.map(task => root.taskRow(task)) })
@@ -218,7 +223,7 @@ Scope {
         function move(key: string, state: string): string {
             if (!TasksService.entry(key))
                 return root.fail(`no task ${key}`)
-            if (states.indexOf(state) < 0)
+            if (root.taskStates.indexOf(state) < 0)
                 return root.fail(`not a state: "${state}" (todo, doing or done)`)
             TasksService.setState(key, state)
             return root.ok({ key: key, state: state })
@@ -251,13 +256,9 @@ Scope {
     IpcHandler {
         target: "panel"
 
-        readonly property var names: ["launcher", "controls", "overview", "appearance", "palette",
-            "stats", "session", "pet", "games", "notes", "board", "keys", "packages",
-            "machines", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight"]
-
         function open(name: string): string {
-            if (names.indexOf(name) < 0)
-                return root.fail(`not a panel: "${name}" (${names.join(", ")})`)
+            if (root.panelNames.indexOf(name) < 0)
+                return root.fail(`not a panel: "${name}" (${root.panelNames.join(", ")})`)
             root.island?.open(name)
             return root.ok({ panel: name })
         }
@@ -268,7 +269,7 @@ Scope {
         }
 
         function list(): string {
-            return root.ok({ panels: names })
+            return root.ok({ panels: root.panelNames })
         }
     }
 

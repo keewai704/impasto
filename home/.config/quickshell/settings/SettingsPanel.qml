@@ -66,12 +66,6 @@ Item {
           keywords: "controls control centre center panel doors buttons row pet games notes board tasks kanban stats blocks grid toggles tiles arrange edit tray wifi bluetooth airplane microphone focus",
           page: controlsPage },
 
-        { id: "dock", category: "shell", icon: "󱂩", label: Tr.t("Dock"),
-          blurb: Tr.t("The dock and the applications kept on it."),
-          tabs: [],
-          keywords: "dock apps applications launcher pinned kept favourite favorite running edge bottom left right align icon size autohide taskbar menu windows close every screen monitors",
-          page: dockPage },
-
         { id: "launcher", category: "shell", icon: "󰍉", label: Tr.t("Launcher"),
           blurb: Tr.t("Search, sigils and the clipboard history."),
           tabs: [{ id: "results", label: Tr.t("Results") },
@@ -141,7 +135,6 @@ Item {
         "widgets": "shell/desktop/",
         "widgets/widgets": "shell/desktop/#arranging",
         "controls": "shell/control-centre/#arranging",
-        "dock": "shell/dock/#settings",
         "launcher": "shell/launcher/#settings",
         "launcher/sigils": "shell/launcher/#modes",
         "launcher/clipboard": "shell/launcher/#the-clipboard",
@@ -564,7 +557,6 @@ Item {
             root.panelRequested("controls")
             root.closed()
         } } }
-    Component { id: dockPage;       DockSection {} }
     Component { id: launcherPage;   LauncherSection {} }
     Component { id: appearancePage; AppearanceSection {
         onPanelRequested: name => root.panelRequested(name) } }

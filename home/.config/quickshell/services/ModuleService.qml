@@ -62,7 +62,7 @@ Singleton {
         { id: "spectrum",      name: "Spectrum",      bar: false, width: 0,   height: 0 },
         { id: "lyrics",        name: "Lyrics",        bar: false, width: 0,   height: 0 },
         { id: "clock",         name: "Clock",         bar: false,
-          width: SettingsService.clockShowsDate ? 240 : 150, height: Theme.capsuleHeight }
+          width: root.clockCore, height: Theme.capsuleHeight }
     ]
 
     function entry(id: string): var {
@@ -161,16 +161,17 @@ Singleton {
 
     // ── CHIP SHAPE ──────────────────────────────────────────────────────────
     //
-    // Modules with a ring face: those whose reading fills from empty to full.
+    // Modules with a gauge face: those whose reading fills from empty to full.
     // A state or a count (the network, the bell, the date, the pending
-    // updates) has nothing to fill, so it keeps its symbol in either shape.
+    // updates) is drawn inside the same open ring, so the bar reads as a row
+    // of iPhone Duo status marks.
     readonly property var ringed: ["media", "timer", "claude", "codex", "battery", "volume",
         "brightness", "stats", "pet"]
 
     // A piece's own shape when it has one, the bar's when it does not.
     function shapeOf(id: string, own: var): string {
         const chosen = own ? own : SettingsService.chipShape
-        return chosen === "ring" && root.ringed.indexOf(id) >= 0 ? "ring" : "icon"
+        return chosen === "ring" && !root.isButton(id) ? "ring" : "icon"
     }
 
     function figureOf(own: var): string {
@@ -361,11 +362,28 @@ Singleton {
     readonly property int overflow: Math.max(0, root.running.length - 2)
     readonly property int overflowWidth: 30
 
-    // Resting width. Alone, the time keeps the catalogue width; with
-    // activities it shrinks to fit and each side gets a slot. One activity
+    // Resting width. The clock fits its text with the same padding as a
+    // standalone bar chip; each activity side gets a slot. One activity
     // splits across both sides (mark left, figure right); two take one each.
-    readonly property int clockCore: SettingsService.clockShowsDate
-        ? 150 : (SettingsService.clockShowsSeconds ? 88 : 72)
+    readonly property string clockFormat: SettingsService.clockShowsSeconds
+        ? SettingsService.clockFormat.replace("mm", "mm:ss") : SettingsService.clockFormat
+    readonly property int clockCore: 22 + Math.ceil(root.clockMetrics.advanceWidth)
+        + (SettingsService.clockShowsDate
+            ? 8 + Math.ceil(root.clockDateMetrics.advanceWidth) : 0)
+
+    readonly property TextMetrics clockMetrics: TextMetrics {
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeSmall
+        font.weight: Font.DemiBold
+        font.features: { "tnum": 1 }
+        text: Qt.formatTime(root.today.date, root.clockFormat)
+    }
+
+    readonly property TextMetrics clockDateMetrics: TextMetrics {
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeSmall
+        text: Qt.formatDate(root.today.date, "ddd d MMM")
+    }
     readonly property int activitySide: {
         if (root.activities.length > 1)
             return 92

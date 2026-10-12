@@ -18,7 +18,7 @@ import "../../services"
 Item {
     id: root
 
-    implicitWidth: holder.implicitWidth
+    implicitWidth: ModuleService.clockCore
     implicitHeight: Theme.capsuleHeight
 
     // Tick every second only when seconds are shown.
@@ -52,8 +52,9 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Qt.formatDateTime(clock.date, root.format)
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeRegular
+                    font.pixelSize: Theme.fontSizeSmall
                     font.weight: Font.DemiBold
+                    font.features: { "tnum": 1 }
                     color: Theme.text
                 }
 

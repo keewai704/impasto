@@ -33,8 +33,10 @@ Item {
     // capsule outline; alone and closed, it is the capsule.
     property bool alone: false
 
-    // Only a module that measures has a ring, whatever shape is asked for.
-    readonly property bool ring: root.shape === "ring" && ModuleService.ringed.indexOf(root.moduleId) >= 0
+    // A module that measures draws its own gauge; any other sits inside the
+    // same open ring, unfilled, so a white arc always means an amount.
+    readonly property bool ring: root.shape === "ring"
+    readonly property bool gauged: ModuleService.ringed.indexOf(root.moduleId) >= 0
     readonly property string value: ModuleService.valueOf(root.moduleId)
     readonly property bool figured: root.value !== ""
     readonly property int size: Math.round(Theme.capsuleHeight * 0.44)
@@ -128,10 +130,29 @@ Item {
 
         Loader {
             anchors.fill: parent
-            active: root.ring && root.moduleId !== ""
+            active: root.ring && root.gauged && root.moduleId !== ""
             sourceComponent: Module {
                 moduleId: root.moduleId
                 compact: true
+            }
+        }
+
+        Loader {
+            anchors.fill: parent
+            active: root.ring && !root.gauged && root.moduleId !== ""
+            sourceComponent: RingIndicator {
+                thickness: 2.5
+                progress: 0
+                trackColor: Theme.indicatorDim
+                fillColor: Theme.indicator
+
+                Text {
+                    anchors.centerIn: parent
+                    text: ModuleService.glyphOf(root.moduleId)
+                    font.family: Theme.fontMono
+                    font.pixelSize: Math.round(Theme.capsuleHeight * 0.38)
+                    color: root.tint
+                }
             }
         }
     }

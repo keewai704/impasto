@@ -34,6 +34,23 @@ from xml.sax.saxutils import escape
 # Sibling module with the greeting's pixel-art scenes.
 import greeting
 
+
+# Home Manager links configuration files into the read-only Nix store. A
+# rename over such a link would replace it with a file Home Manager then
+# refuses to overwrite, so those targets are left alone.
+_replace = os.replace
+
+
+def _replace_unless_managed(source, target, *args, **kwargs):
+    if os.path.realpath(target).startswith("/nix/store/"):
+        if os.path.isfile(source):
+            os.unlink(source)
+        raise PermissionError(f"{target} is managed by Nix")
+    return _replace(source, target, *args, **kwargs)
+
+
+os.replace = _replace_unless_managed
+
 XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
 XDG_DATA_HOME = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
 XDG_STATE_HOME = os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state")

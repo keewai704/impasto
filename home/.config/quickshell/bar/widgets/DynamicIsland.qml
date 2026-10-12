@@ -43,23 +43,16 @@ Rectangle {
     readonly property int panelPad: root.paper
         ? 0 : (islandState.openPanel === "module" ? Theme.cardInset : Theme.panelPadding)
 
-    // For the bar: attached, the notch fillets have to light with the island.
+    // For the bar's hover handling.
     readonly property bool hovered: hover.hovered
-    // Lit where a click does something: the clock at rest. Not at rest in the
-    // one-capsule style, where the band and the island are one shape and
-    // cannot light separately; not the glance, which is drawn on the black
-    // with a player's controls of its own; not over panels, which have their
-    // own controls; and not while `landing` from one.
-    readonly property bool lit: hover.hovered && !root.landing
-        && islandState.layer === islandState.layerModules && !root.hosted
-    // Solid, a floating island at rest is a shade off the black; on glass it
-    // is the capsules' ground, since a lighter veil reads as another material.
+
+    // The clock and its hover summary share the bar's ground.
     readonly property color surfaceColor: {
-        if (!Theme.solid)
-            return root.lit ? Theme.islandGroundLit : Theme.islandGround
-        if (root.lit)
-            return Theme.islandSurfaceHover
-        return SettingsService.islandAttached ? Theme.islandGround : Theme.islandSurface
+        if (!Theme.solid || SettingsService.islandAttached
+            || islandState.layer === islandState.layerModules
+            || islandState.layer === islandState.layerSummary)
+            return Theme.islandGround
+        return Theme.islandSurface
     }
 
     // ── HOSTED ──────────────────────────────────────────────────────────────
