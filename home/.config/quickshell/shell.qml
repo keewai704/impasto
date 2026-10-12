@@ -371,6 +371,12 @@ ShellRoot {
     }
 
     GlobalShortcut {
+        name: "effects"
+        description: "Open the island wallpaper effects"
+        onPressed: root.island?.toggle("effects")
+    }
+
+    GlobalShortcut {
         name: "pet"
         description: "Open the pet"
         onPressed: root.island?.toggle("pet")

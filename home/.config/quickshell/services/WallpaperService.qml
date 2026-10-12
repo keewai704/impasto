@@ -36,6 +36,70 @@ QtObject {
     property string currentMotion: ""
     property bool scanning: false
 
+    property var effects: []
+    property string currentEffect: "none"
+    readonly property string effectScript: Quickshell.shellPath("scripts/wallpaper_effect.py")
+    readonly property bool processingEffect: root.effectProcess.running
+
+    readonly property Process effectsProcess: Process {
+        property string wallpaper: ""
+        command: [root.effectScript, "list", root.effectsProcess.wallpaper]
+        running: true
+        onExited: {
+            if (root.effectsProcess.wallpaper !== root.currentWallpaper)
+                root.scanEffects()
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const state = root.parseJson(text)
+                if (state) {
+                    root.effects = state.effects
+                    root.currentEffect = state.current
+                }
+            }
+        }
+    }
+
+    function scanEffects(): void {
+        if (root.effectsProcess.running)
+            return
+        root.effectsProcess.wallpaper = root.currentWallpaper
+        root.effectsProcess.running = true
+    }
+
+    onCurrentWallpaperChanged: root.scanEffects()
+
+    readonly property Process effectProcess: Process {
+        property string wallpaper: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const path = text.trim()
+                if (path !== "" && root.chosen === root.effectProcess.wallpaper)
+                    root.apply(path)
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "")
+                    console.warn(text.trim())
+            }
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                OsdService.requested("󰀦", "Could not apply wallpaper effect", -1)
+        }
+    }
+
+    function applyEffect(id: string): bool {
+        if (root.effectProcess.running || root.applyProcess.running
+                || !root.effects.some(effect => effect.id === id))
+            return false
+        root.effectProcess.wallpaper = root.chosen
+        root.effectProcess.command = [root.effectScript, id, root.currentWallpaper, root.currentMotion]
+        root.effectProcess.running = true
+        return true
+    }
+
     // What was picked: the video while one plays, else the picture. What a
     // profile keeps, and what the picker marks as applied.
     readonly property string chosen: root.currentMotion || root.currentWallpaper
@@ -172,6 +236,7 @@ QtObject {
         root.scanning = true
         root.scanProcess.running = true
         root.animatedProcess.running = true
+        root.scanEffects()
     }
 
     // ── TRANSITIONS ─────────────────────────────────────────────────────────
