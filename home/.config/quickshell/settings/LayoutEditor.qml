@@ -471,10 +471,11 @@ Item {
                             color: Theme.textMuted
                         }
 
-                        // Shown but disabled for buttons, which have no ring.
+                        // Shown but disabled for modules with no gauge to
+                        // draw as a ring.
                         SegmentedControl {
                             readonly property bool ringable: root.picked !== null
-                                && !ModuleService.isButton(root.picked.id)
+                                && ModuleService.ringed.indexOf(root.picked.id) >= 0
 
                             enabled: ringable
                             opacity: ringable ? 1 : 0.55

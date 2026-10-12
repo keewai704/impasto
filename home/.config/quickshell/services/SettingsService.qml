@@ -566,8 +566,8 @@ Singleton {
         property var islandActivitiesSeen: null
 
         // One of `chipShapes` and one of `chipFigures`.
-        property string chipShape: "ring"
-        property string chipFigure: "hover"
+        property string chipShape: "icon"
+        property string chipFigure: "on"
 
         property int launcherResults: 9
 

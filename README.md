@@ -1,7 +1,7 @@
 ## Island fork
 
 This fork of [impasto](https://github.com/andreumassanet/impasto) carries
-Island's shell changes: Duo status rings, clock styling, no dock,
+Island's shell changes: clock styling, no dock,
 [hypr-brightness](https://github.com/keewai704/hypr-brightness) integration,
 IPC and tray fixes, and protection for Nix-managed configuration files.
 Use [Island](https://github.com/keewai704/Island) for NixOS packaging and

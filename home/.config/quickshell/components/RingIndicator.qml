@@ -13,9 +13,8 @@ import QtQuick.Shapes
 
 import "../theme"
 
-// A gauge in the shape of iPhone Duo's status mark: an open ring with its gap
-// at the bottom, filling clockwise from the gap's left end. Generic: it takes
-// a fraction and a colour, and children are drawn inside it.
+// A circular gauge that fills clockwise from the top. Generic: it takes a
+// fraction and a colour, and children are drawn inside it.
 Item {
     id: root
 
@@ -32,9 +31,6 @@ Item {
 
     readonly property real clamped: Math.max(0, Math.min(1, root.progress))
     readonly property real radius: (Math.min(root.width, root.height) - root.thickness) / 2
-    readonly property real gap: 70
-    readonly property real start: 90 + root.gap / 2
-    readonly property real span: 360 - root.gap
 
     implicitWidth: Theme.capsuleHeight
     implicitHeight: Theme.capsuleHeight
@@ -49,15 +45,14 @@ Item {
             strokeWidth: root.thickness
             strokeColor: root.trackColor
             fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
 
             PathAngleArc {
                 centerX: root.width / 2
                 centerY: root.height / 2
                 radiusX: root.radius
                 radiusY: root.radius
-                startAngle: root.start
-                sweepAngle: root.span
+                startAngle: -90
+                sweepAngle: 360
             }
         }
 
@@ -74,8 +69,8 @@ Item {
                 centerY: root.height / 2
                 radiusX: root.radius
                 radiusY: root.radius
-                startAngle: root.start
-                sweepAngle: root.clamped <= 0 ? 0 : Math.max(2, root.span * root.clamped)
+                startAngle: -90
+                sweepAngle: root.clamped <= 0 ? 0 : Math.max(2, 360 * root.clamped)
 
                 Behavior on sweepAngle {
                     NumberAnimation {

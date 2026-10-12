@@ -161,17 +161,16 @@ Singleton {
 
     // ── CHIP SHAPE ──────────────────────────────────────────────────────────
     //
-    // Modules with a gauge face: those whose reading fills from empty to full.
+    // Modules with a ring face: those whose reading fills from empty to full.
     // A state or a count (the network, the bell, the date, the pending
-    // updates) is drawn inside the same open ring, so the bar reads as a row
-    // of iPhone Duo status marks.
+    // updates) has nothing to fill, so it keeps its symbol in either shape.
     readonly property var ringed: ["media", "timer", "claude", "codex", "battery", "volume",
         "brightness", "stats", "pet"]
 
     // A piece's own shape when it has one, the bar's when it does not.
     function shapeOf(id: string, own: var): string {
         const chosen = own ? own : SettingsService.chipShape
-        return chosen === "ring" && !root.isButton(id) ? "ring" : "icon"
+        return chosen === "ring" && root.ringed.indexOf(id) >= 0 ? "ring" : "icon"
     }
 
     function figureOf(own: var): string {
