@@ -52,7 +52,6 @@ Item {
         CalendarCard {
             bare: true
             padding: Theme.cardPadding
-            onPanelRequested: panel => ModuleService.requestPanel(panel)
         }
     }
 

@@ -17,16 +17,8 @@ import "../../../components"
 
 // A month grid from plain date arithmetic; Qt's Calendar costs more to style
 // than 42 cells cost to lay out.
-//
-// Clicking a day with tasks due turns the card into that day's list, with a
-// way back in the corner. A row opens the task on the board.
 Card {
     id: root
-
-    signal panelRequested(string panel)
-
-    // The day shown instead of the month, as a day key; "" for the month.
-    property string picked: ""
 
     // Weeks start on Monday; JavaScript counts from Sunday, hence the shift
     // wherever a weekday index is used.
@@ -62,85 +54,10 @@ Card {
     // Reset to the current month whenever the card is rebuilt.
     Component.onCompleted: root.offsetMonths = 0
 
-    // ── DAY ─────────────────────────────────────────────────────────────────
-
-    ColumnLayout {
-        id: dayPage
-
-        anchors.fill: parent
-        visible: root.picked !== ""
-        spacing: 6
-
-        readonly property var date: TasksService.dateOf(root.picked)
-        readonly property var due: TasksService.on(root.picked)
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-
-            IconButton {
-                icon: "󰁍"
-                iconSize: 13
-                implicitWidth: 26
-                implicitHeight: 24
-                onClicked: root.picked = ""
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: dayPage.date ? Qt.formatDate(dayPage.date, "dddd d MMMM") : ""
-                elide: Text.ElideRight
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeSmall
-                font.weight: Font.DemiBold
-                color: Theme.text
-            }
-
-            Text {
-                text: {
-                    const n = dayPage.due.length
-                    const left = dayPage.due.filter(task => task.state !== "done").length
-                    return n === 0 ? "" : `${left} of ${n}`
-                }
-                font.family: Theme.fontMono
-                font.pixelSize: Theme.fontSizeLabel
-                color: Theme.textMuted
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Theme.hairline
-        }
-
-        Repeater {
-            model: ScriptModel {
-                values: dayPage.due
-                objectProp: "key"
-            }
-
-            TaskRow {
-                required property var modelData
-
-                Layout.fillWidth: true
-                task: modelData
-                dated: false
-                onOpened: {
-                    TasksService.open(modelData.key)
-                    root.panelRequested("board")
-                }
-            }
-        }
-
-        Item { Layout.fillHeight: true }
-    }
-
     // ── MONTH ───────────────────────────────────────────────────────────────
 
     ColumnLayout {
         anchors.fill: parent
-        visible: root.picked === ""
         spacing: 9
 
         RowLayout {
@@ -257,12 +174,6 @@ Card {
                         && root.showingThisMonth
                         && cell.day === root.today.getDate()
 
-                    // Tasks due that day, for days in the month shown.
-                    readonly property string key: cell.inMonth
-                        ? TasksService.dayKey(new Date(root.year, root.month, cell.day)) : ""
-                    readonly property int tasks: cell.key !== "" ? TasksService.countOn(cell.key) : 0
-                    readonly property int pending: cell.key !== "" ? TasksService.pendingOn(cell.key) : 0
-
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -277,7 +188,6 @@ Card {
 
                         Text {
                             anchors.centerIn: parent
-                            anchors.verticalCenterOffset: cell.tasks > 0 ? -1 : 0
                             text: cell.day
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSizeSmall
@@ -291,31 +201,6 @@ Card {
                             opacity: cell.inMonth ? 1 : 0.35
                         }
 
-                        // Tasks due: accent while any is open, muted once all
-                        // are done.
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 3
-                            visible: cell.tasks > 0
-                            width: 3
-                            height: 3
-                            radius: 1.5
-                            color: cell.isToday ? Theme.accentText
-                                : (cell.pending > 0 ? Theme.accent : Theme.textMuted)
-                        }
-
-                        // Only days with tasks are clickable.
-                        HoverHandler {
-                            enabled: cell.tasks > 0
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
-                        TapHandler {
-                            enabled: cell.tasks > 0
-                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                            onTapped: root.picked = cell.key
-                        }
                     }
                 }
             }

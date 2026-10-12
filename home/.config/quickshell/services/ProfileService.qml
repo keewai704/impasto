@@ -26,7 +26,7 @@ import "../theme"
 //
 // Profiles are keyed by id; the name is only a label. They never carry
 // `SettingsService.machineKeys` (screens, identity, per-session switches) or
-// user data (notes, tasks, clipboard).
+// clipboard history.
 Singleton {
     id: root
 

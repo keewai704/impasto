@@ -28,9 +28,8 @@ Scope {
 
     // Outside the handlers: a handler's properties are offered over IPC, which
     // carries no lists.
-    readonly property var taskStates: ["todo", "doing", "done"]
     readonly property var panelNames: ["launcher", "controls", "overview", "appearance", "palette", "effects",
-        "stats", "session", "notes", "board", "keys", "packages",
+        "stats", "session", "keys", "packages",
         "machines", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight"]
 
     function ok(extra: var): string {
@@ -49,28 +48,6 @@ Scope {
         if (["off", "false", "no", "0"].indexOf(said) >= 0)
             return false
         return said === "toggle" ? !now : null
-    }
-
-    // Helpers live here, not in a handler: every function of a handler is a
-    // command, and a command takes only plain arguments.
-    function noteRow(note: var): var {
-        return { key: note.key, title: NotesService.titleOf(note), text: note.text,
-                 tint: note.tint, archived: note.archived,
-                 edited: new Date(note.edited).toISOString() }
-    }
-
-    function taskRow(task: var): var {
-        return { key: task.key, text: task.text, notes: task.body, state: task.state,
-                 due: task.due, overdue: TasksService.isOverdue(task) }
-    }
-
-    // A date as the board reads one: today, tomorrow, fri, 12 oct, +3,
-    // 2026-10-12. Empty clears it; null is not a date.
-    function day(when: string): var {
-        if (!when)
-            return ""
-        const parsed = TasksService.parseDue(when)
-        return parsed !== "" ? parsed : null
     }
 
     function machineDo(verb: string, name: string): string {
@@ -94,9 +71,6 @@ Scope {
                 media: MediaService.available
                     ? { title: MediaService.title, artist: MediaService.artist, playing: MediaService.playing }
                     : null,
-                notes: NotesService.count,
-                tasks: { todo: TasksService.countIn("todo"), doing: TasksService.countIn("doing"),
-                         done: TasksService.countIn("done") },
                 machines: VmService.running.map(machine => machine.name),
                 palette: ThemeService.activeId,
                 wallpaper: WallpaperService.chosen,
@@ -148,106 +122,6 @@ Scope {
         function get(): string {
             return root.ok({ running: TimerService.running, paused: TimerService.paused,
                              label: TimerService.label, left: TimerService.display })
-        }
-    }
-
-    // ── NOTES ───────────────────────────────────────────────────────────────
-
-    IpcHandler {
-        target: "note"
-
-        function add(text: string, title: string, tint: string): string {
-            if (!text && !title)
-                return root.fail("a note needs some text")
-            const tints = ["yellow", "pink", "blue", "green", "orange", "purple"]
-            const key = NotesService.add(title || "", text || "", tints.indexOf(tint) >= 0 ? tint : "yellow")
-            return root.ok({ key: key })
-        }
-
-        function list(): string {
-            return root.ok({ notes: NotesService.live.map(note => root.noteRow(note)) })
-        }
-
-        function get(key: string): string {
-            const note = NotesService.entry(key)
-            return note ? root.ok({ note: root.noteRow(note) }) : root.fail(`no note ${key}`)
-        }
-
-        function append(key: string, text: string): string {
-            const note = NotesService.entry(key)
-            if (!note)
-                return root.fail(`no note ${key}`)
-            NotesService.update(key, { text: note.text ? `${note.text}\n${text}` : text })
-            return root.ok({ key: key })
-        }
-
-        function archive(key: string): string {
-            if (!NotesService.entry(key))
-                return root.fail(`no note ${key}`)
-            NotesService.archive(key, true)
-            return root.ok({ key: key })
-        }
-
-        function remove(key: string): string {
-            if (!NotesService.entry(key))
-                return root.fail(`no note ${key}`)
-            NotesService.remove(key)
-            return root.ok({ key: key })
-        }
-    }
-
-    // ── TASKS ───────────────────────────────────────────────────────────────
-
-    IpcHandler {
-        target: "task"
-
-        function add(text: string, due: string, state: string, notes: string): string {
-            if (!text)
-                return root.fail("a task needs some text")
-            const when = root.day(due)
-            if (when === null)
-                return root.fail(`not a date: "${due}" (try today, tomorrow, fri, 12 oct or 2026-10-12)`)
-            if (state && root.taskStates.indexOf(state) < 0)
-                return root.fail(`not a state: "${state}" (todo, doing or done)`)
-            const key = TasksService.add(text, when, state || "todo", notes || "")
-            return root.ok({ key: key, due: when })
-        }
-
-        function list(state: string): string {
-            if (state && root.taskStates.indexOf(state) < 0)
-                return root.fail(`not a state: "${state}" (todo, doing or done)`)
-            const rows = state ? TasksService.inState(state) : TasksService.tasks
-            return root.ok({ tasks: rows.map(task => root.taskRow(task)) })
-        }
-
-        function move(key: string, state: string): string {
-            if (!TasksService.entry(key))
-                return root.fail(`no task ${key}`)
-            if (root.taskStates.indexOf(state) < 0)
-                return root.fail(`not a state: "${state}" (todo, doing or done)`)
-            TasksService.setState(key, state)
-            return root.ok({ key: key, state: state })
-        }
-
-        function done(key: string): string {
-            return move(key, "done")
-        }
-
-        function due(key: string, when: string): string {
-            if (!TasksService.entry(key))
-                return root.fail(`no task ${key}`)
-            const parsed = root.day(when)
-            if (parsed === null)
-                return root.fail(`not a date: "${when}"`)
-            TasksService.setDue(key, parsed)
-            return root.ok({ key: key, due: parsed })
-        }
-
-        function remove(key: string): string {
-            if (!TasksService.entry(key))
-                return root.fail(`no task ${key}`)
-            TasksService.remove(key)
-            return root.ok({ key: key })
         }
     }
 

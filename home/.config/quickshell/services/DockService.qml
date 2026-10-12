@@ -181,14 +181,13 @@ Singleton {
 
     // ── RUNNING ─────────────────────────────────────────────────────────────
     //
-    // Keeps `HyprlandService.clients` live while the dock or any note deck
-    // needs it (both test for fullscreen windows). Decks are read from the
-    // settings, not `DesktopService`, which depends on this service's zone.
-    readonly property bool decksExist: {
+    // Keep clients live while the dock or an edge spectrum needs fullscreen
+    // detection. Read settings to avoid a dependency on DesktopService.
+    readonly property bool spectraExist: {
         const list = SettingsService.desktopWidgets
         const length = list && typeof list.length === "number" ? list.length : 0
         for (let index = 0; index < length; index++) {
-            if (list[index] && list[index].edge)
+            if (list[index] && list[index].id === "spectrum" && list[index].edge)
                 return true
         }
         return false
@@ -197,7 +196,7 @@ Singleton {
     readonly property Binding watching: Binding {
         target: HyprlandService
         property: "watchClients"
-        value: root.enabled || root.decksExist
+        value: root.enabled || root.spectraExist
     }
 
     onEnabledChanged: {

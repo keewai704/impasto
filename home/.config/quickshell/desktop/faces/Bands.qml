@@ -24,14 +24,13 @@ Item {
     // Colours resolved by the widget. Faces read this rather than `Theme`.
     property var ink: DesktopService.inkFor(null)
 
-    // The desktop row, for faces that draw what it names (a note).
+    // The desktop row, for faces that draw the picture it names.
     property var row: null
 
     readonly property var components: ({
         clock: clockBand,
         weather: weatherBand,
         github: githubBand,
-        notes: notesBand,
         photo: photoBand,
         spectrum: spectrumBand
     })
@@ -160,13 +159,6 @@ Item {
                 }
             ]
         }
-    }
-
-    // A note on one line, readable at a distance; see `NoteFace`.
-    Component {
-        id: notesBand
-
-        NoteFace { ink: root.ink; row: root.row; family: "8x2" }
     }
 
     // A picture of your own, across the band; see `PhotoFace`.

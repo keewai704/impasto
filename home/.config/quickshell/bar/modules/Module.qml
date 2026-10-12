@@ -40,8 +40,6 @@ Item {
         github: githubModule,
         stats: statsModule,
         updates: updatesModule,
-        notes: notesModule,
-        tasks: tasksModule,
         notifications: notificationsModule
     })
 
@@ -70,7 +68,5 @@ Item {
     Component { id: githubModule;     GithubModule {} }
     Component { id: statsModule;      StatsModule { compact: root.compact } }
     Component { id: updatesModule;    UpdatesModule {} }
-    Component { id: notesModule;      NotesModule {} }
-    Component { id: tasksModule;      TasksModule {} }
     Component { id: notificationsModule; NotificationsModule {} }
 }

@@ -8,7 +8,7 @@
 # │                                                                          │
 # ╰──────────────────────────────────────────────────────────────────────────╯
 
-"""Drive the impasto shell: timers, notes, tasks, panels, machines and more.
+"""Drive the impasto shell: timers, panels, machines and more.
 
 Every command answers with one line of JSON, `{"ok": true, ...}` or
 `{"error": "..."}`, indented when a person is reading it in a terminal, and
@@ -30,7 +30,7 @@ import time
 # passed in the order listed, empty when not given.
 COMMANDS = {
     "status": {
-        "": ("status", "get", [], [], "everything at once: timer, music, notes, tasks, machines, looks"),
+        "": ("status", "get", [], [], "everything at once: timer, music, machines, looks"),
     },
     "timer": {
         "start": ("timer", "start", ["duration", "label?..."], [], "start a countdown: 25m, 1h30m, 90s, 10:00"),
@@ -38,23 +38,6 @@ COMMANDS = {
         "resume": ("timer", "resume", [], [], "carry on"),
         "cancel": ("timer", "cancel", [], [], "stop it"),
         "": ("timer", "get", [], [], "what is left"),
-    },
-    "note": {
-        "add": ("note", "add", ["text..."], ["--title", "--tint"], "a new note; --tint yellow|pink|blue|green|orange|purple"),
-        "list": ("note", "list", [], [], "every note that is not archived, newest first"),
-        "get": ("note", "get", ["key"], [], "one note"),
-        "append": ("note", "append", ["key", "text..."], [], "add a line to a note"),
-        "archive": ("note", "archive", ["key"], [], "put it away"),
-        "remove": ("note", "remove", ["key"], [], "delete it"),
-    },
-    "task": {
-        "add": ("task", "add", ["text..."], ["--due", "--state", "--notes"],
-                "a new task; --due today|tomorrow|fri|12 oct|+3|2026-10-12, --state todo|doing|done"),
-        "list": ("task", "list", [], ["--state"], "every task, or those in one state"),
-        "done": ("task", "done", ["key"], [], "mark it done"),
-        "move": ("task", "move", ["key", "state"], [], "to todo, doing or done"),
-        "due": ("task", "due", ["key", "when?..."], [], "set its date; nothing clears it"),
-        "remove": ("task", "remove", ["key"], [], "delete it"),
     },
     "open": {
         "": ("panel", "open", ["panel"], [], "open a panel of the island (impasto panels lists them)"),
@@ -138,16 +121,11 @@ LOCAL = {
     "version": "impasto's version, as ./setup last installed it",
 }
 
-STATES = ["todo", "doing", "done"]
 SWITCH = ["on", "off", "toggle"]
 
 EXAMPLES = """\
 examples:
   impasto timer start 25m Pomodoro
-  impasto note add "Buy bread" --tint green
-  impasto task add "Review the pull request" --due tomorrow
-  impasto task list --state todo
-  impasto task done task-muvd69it   (keys come from task list)
   impasto open machines
   impasto vm start fedora-43-Workstation
   impasto layout scrolling
@@ -170,7 +148,7 @@ def usage(noun=None):
     if noun not in COMMANDS:
         lines += [f"  {name:<46} {text}" for name, text in LOCAL.items()]
         lines += ["", "Every answer is one line of JSON, {\"ok\": true, ...} or {\"error\": \"...\"};",
-                  "an error exits 1. Keys of notes and tasks come from their list.", "", EXAMPLES]
+                  "an error exits 1.", "", EXAMPLES]
     return "\n".join(lines)
 
 
@@ -352,7 +330,7 @@ def events(before, after):
     found += [{"event": "machine.started", "name": name} for name in sorted(new - old)]
     found += [{"event": "machine.stopped", "name": name} for name in sorted(old - new)]
 
-    for key in ("notes", "tasks", "palette", "wallpaper", "layout", "game", "focus",
+    for key in ("palette", "wallpaper", "layout", "game", "focus",
                 "nightLight", "volume", "muted", "brightness"):
         if before.get(key) != after.get(key):
             found.append({"event": f"{key}.changed", "value": after.get(key)})
@@ -397,8 +375,8 @@ def watch(arguments):
 def complete(words):
     """Candidates for the next word, for the shell's completion."""
     def keys(target):
-        payload = call(target, "list", [""] if target == "task" else [])
-        rows = payload.get("notes") or payload.get("tasks") or payload.get("machines") or []
+        payload = call(target, "list")
+        rows = payload.get("machines") or []
         return [row.get("key") or row.get("name") for row in rows]
 
     choices = []
@@ -422,17 +400,7 @@ def complete(words):
                 choices += call("panel", "list").get("panels", [])
         else:
             verb = rest[0]
-            if noun == "note" and verb in ("get", "append", "archive", "remove") and len(rest) == 1:
-                choices = keys("note")
-            elif noun == "task" and verb in ("done", "move", "due", "remove") and len(rest) == 1:
-                choices = keys("task")
-            elif noun == "task" and verb == "move" and len(rest) == 2:
-                choices = STATES
-            elif noun == "task" and rest[-1] == "--state":
-                choices = STATES
-            elif noun == "note" and rest[-1] == "--tint":
-                choices = ["yellow", "pink", "blue", "green", "orange", "purple"]
-            elif noun == "vm" and len(rest) == 1 and verb != "list":
+            if noun == "vm" and len(rest) == 1 and verb != "list":
                 choices = keys("machine")
             elif noun == "theme" and verb == "set" and len(rest) == 1:
                 choices = [row["id"] for row in call("theme", "list").get("palettes", [])]

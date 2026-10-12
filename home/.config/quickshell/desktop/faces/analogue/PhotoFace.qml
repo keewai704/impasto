@@ -33,7 +33,7 @@ Item {
         root.row && typeof root.row.caption === "string" ? root.row.caption : ""
     readonly property bool film: root.family === "8x2"
 
-    // The analogue faces' paper: the text colour under the notes' wash.
+    // The analogue faces' paper: the text colour washed towards white.
     readonly property color paper: Qt.tint(root.ink.text, Theme.paperWash)
 
     // 0.8° to 2.6° either way. Keys that differ in their last character, as

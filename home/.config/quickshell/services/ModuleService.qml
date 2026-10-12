@@ -29,8 +29,7 @@ import "../theme"
 Singleton {
     id: root
 
-    //   bar      whether it can go on the bar (board and deck live on
-    //            the desktop and behind their panels instead)
+    //   bar      whether it can go on the bar
     //   desk     false for the one module with no desktop face
     //   width    detail size; none for the spectrum, which has no detail and
     //   height   lives only on the desktop, on the grid or along an edge, nor
@@ -54,8 +53,6 @@ Singleton {
         { id: "stats",         name: "System",        bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, Theme.cardRowGap + 36) },
         { id: "updates",       name: "Updates",       bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
         { id: "calendar",      name: "Calendar",      bar: true,  width: 340, height: 330 },
-        { id: "notes",         name: "Notes",         bar: false, width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
-        { id: "tasks",         name: "Tasks",         bar: false, width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
         { id: "photo",         name: "Photo",         bar: false, width: 356, height: 150 },
         { id: "spectrum",      name: "Spectrum",      bar: false, width: 0,   height: 0 },
         { id: "lyrics",        name: "Lyrics",        bar: false, width: 0,   height: 0 },
@@ -75,13 +72,10 @@ Singleton {
     // would be the same piece without its figure. Alone in a capsule, a
     // button is drawn as a circle.
     //
-    // On the bar an id is a button before it is a module; notes are a module
-    // only on the desktop.
-    //
     // Capture is what the capture key does: the photo is taken at once, so
     // whatever the island has open is in it.
     readonly property var buttonIds: ["launcher", "overview", "controls", "capture",
-        "appearance", "notes", "board", "keys", "packages", "settings", "session"]
+        "appearance", "keys", "packages", "settings", "session"]
 
     readonly property var buttons: {
         const out = {}
@@ -490,10 +484,6 @@ Singleton {
                      height: Theme.cardHeight(Math.min(6, NotificationService.history.length) + 1, 0) }
         if (id === "updates")
             return { width: item.width, height: Theme.cardHeight(Math.min(3, UpdatesService.updates.length) + 1, 0) }
-        if (id === "notes")
-            return { width: item.width, height: Theme.cardHeight(Math.min(3, NotesService.live.length) + 1, 0) }
-        if (id === "tasks")
-            return { width: item.width, height: Theme.cardHeight(Math.min(3, TasksService.queue.length) + 1, 0) }
         if (id === "claude")
             return { width: item.width, height: Theme.cardHeight(ClaudeService.rows, 0) }
         if (id === "battery")
@@ -529,7 +519,7 @@ Singleton {
         root.activationRequested(id)
     }
 
-    // A module asking for a panel, e.g. the notes detail opening the deck.
+    // A module asking to open a panel.
     signal panelRequested(string panel)
 
     function requestPanel(panel: string): void {
@@ -588,10 +578,6 @@ Singleton {
         case "updates":
             // False on a machine with neither checkupdates nor pacman.
             return UpdatesService.available
-        case "notes":
-            return NotesService.ready
-        case "tasks":
-            return TasksService.ready
         case "photo":
             // An empty one asks for a picture.
             return true

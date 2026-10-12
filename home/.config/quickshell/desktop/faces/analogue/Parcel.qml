@@ -112,7 +112,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: root.count
-            font.family: Theme.fontHand
+            font.family: Theme.fontSignature
             font.pixelSize: Math.round(root.w * 0.42)
             color: Theme.paperInk
         }

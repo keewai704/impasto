@@ -13,7 +13,7 @@ import "../../../theme"
 import "../../../services"
 
 // One leaf of a wall calendar: two rings, the month on an accent ribbon, the
-// day in the notes' ink and the weekday under it. `band` is the ribbon's
+// day in dark ink and the weekday under it. `band` is the ribbon's
 // height; with no ribbon text it is a blank sheet, which the month is drawn on.
 Item {
     id: root

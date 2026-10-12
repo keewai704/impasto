@@ -38,7 +38,7 @@ The documentation below describes upstream impasto.
 </p>
 
 <p align="center">
-  <img src=".github/assets/hero.jpg" alt="The desk: the island with a track playing, widgets down the right, a note deck on the left edge, a terminal with the lava lamp greeting, and the dock" width="100%">
+  <img src=".github/assets/hero.jpg" alt="The desk: the island with a track playing, widgets down the right, a terminal with the lava lamp greeting, and the dock" width="100%">
 </p>
 
 The name is the technique the wallpapers are painted in: paint laid on thick
@@ -64,7 +64,7 @@ opens into the island rather than into a popup of its own. A notification
 arrives there with its buttons, and stays in the control centre's list.
 
 <p align="center">
-  <img src=".github/assets/island-details.jpg" alt="Module details in the island: the player, the battery, Claude Code's usage, the processor and memory, the volume, the Wi-Fi list, the weather, the month with task dots, the tasks, a countdown and the GitHub wall" width="100%">
+  <img src=".github/assets/island-details.jpg" alt="Module details in the island: the player, the battery, Claude Code's usage, the processor and memory, the volume, the Wi-Fi list, the weather, the calendar, a countdown and the GitHub wall" width="100%">
 </p>
 
 ## The bar
@@ -84,7 +84,7 @@ wallpaper, the workspace strip is dots, bars, rings or numbers written out, and
 a tray holds the icons applications put there.
 
 **On more than one screen, every screen gets the whole bar**, and the island is
-live on the one you are typing on. Each screen keeps widgets and notes of its
+live on the one you are typing on. Each screen keeps widgets of its
 own and the dock is on all of them, a workspace number brings that workspace to
 the screen you are on, and the brightness keys dim that screen — an external
 monitor over DDC/CI.
@@ -137,20 +137,6 @@ frame.
 
 In the terminal, the prompt is laid out like the bar, and `fa` greets you with
 fastfetch beside an animated scene drawn in pixel art out of the palette.
-
-## Notes and tasks
-
-<p align="center">
-  <img src=".github/assets/notes-and-tasks.jpg" alt="The deck of pastel notes in handwriting, one note open with the island become yellow paper, the kanban board with three lanes, and a task open with its day and lane" width="100%">
-</p>
-
-**A note is paper**: a pastel square with a title and the body in handwriting.
-`SUPER + S` opens the deck; on the wallpaper a note sits on a square, or stacks
-with others along an edge as tabs that peek out under the pointer.
-
-**A board for what has to be done.** `SUPER + K` is to do, doing, done, with
-cards dragged between the lanes, and a task's day shows as a dot under the
-month wherever a month is drawn.
 
 ## Lock and login
 

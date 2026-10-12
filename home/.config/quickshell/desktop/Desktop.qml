@@ -36,8 +36,8 @@ PanelWindow {
 
     readonly property bool editing: DesktopService.editing
 
-    // Every board is one screen's, and nothing on it ever leaves: widgets,
-    // decks and the grid are this screen's alone. The mode is held by the
+    // Every board is one screen's, and nothing on it ever leaves: widgets
+    // and the grid are this screen's alone. The mode is held by the
     // screen it was entered from, the card is on the screen the pointer is
     // on, and the inspector and the picker are beside the widget they are
     // about, whichever screen that is on.
@@ -56,7 +56,7 @@ PanelWindow {
     // being dragged, and the card changing screens under it would take the
     // drag with it.
     readonly property bool claims: root.editing && pointerOn.hovered
-        && !DesktopService.inHand && DeckService.dragging === ""
+        && !DesktopService.inHand
 
     onClaimsChanged: if (root.claims) DesktopService.galleryScreen = root.screenName
 
@@ -91,9 +91,7 @@ PanelWindow {
 
     HyprlandFocusGrab {
         active: root.editing && root.hosting
-        // Defensive: both lists are read while the singletons are still
-        // being built, and one of them is briefly undefined.
-        windows: (DesktopService.windows ?? []).concat(DeckService.windows ?? [])
+        windows: DesktopService.windows ?? []
         onCleared: DesktopService.edit(false)
     }
 
@@ -285,6 +283,27 @@ PanelWindow {
             }
         }
 
+        // Highlight the edge a spectrum would occupy after dropping.
+        Repeater {
+            model: DesktopService.edges
+
+            Rectangle {
+                required property string modelData
+
+                x: modelData === "right" ? surface.width - 3 : 0
+                y: modelData === "bottom" ? surface.height - 3 : 0
+                width: modelData === "bottom" ? surface.width : 3
+                height: modelData === "bottom" ? 3 : surface.height
+                z: 4
+                color: Theme.accent
+                opacity: root.editing && DesktopService.receivingEdge === modelData
+                    && DesktopService.receivingScreen === root.screenName ? 1 : 0
+                visible: opacity > 0
+
+                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
+            }
+        }
+
         // The card of every module, only while arranging. Above the widgets but
         // below the one being dragged, so a widget dropped onto it is seen
         // arriving. It fills the board and places its card itself.
@@ -404,8 +423,6 @@ PanelWindow {
             id: menuWindow
 
             readonly property var menu: root.menu
-            readonly property var row: menu && menu.key !== "" ? DesktopService.entryOf(menu.key) : null
-            readonly property bool onNote: row !== null && row.id === "notes"
 
             screen: root.screen
 
@@ -450,30 +467,22 @@ PanelWindow {
                     if (menuWindow.menu.key === "") {
                         return [
                             { id: "arrange", label: Tr.t("Arrange widgets"), icon: "󰆾", warn: false },
-                            { id: "note", label: Tr.t("New note"), icon: "󰎞", warn: false },
                             { id: "wallpaper", label: Tr.t("Wallpaper"), icon: "󰸉", warn: false },
                             { id: "palette", label: Tr.t("Palette"), icon: "󰏘", warn: false },
                             { id: "settings", label: Tr.t("Settings"), icon: "󰒓", warn: false }
                         ]
                     }
                     const rows = []
-                    if (menuWindow.onNote)
-                        rows.push({ id: "open", label: Tr.t("Open"), icon: "󰏫", warn: false })
                     rows.push({ id: "edit", label: Tr.t("Edit"), icon: "󰆾", warn: false })
                     rows.push({ id: "remove", label: Tr.t("Remove"), icon: "󰆴", warn: true })
                     return rows
                 }
                 onChosen: id => {
                     const menu = menuWindow.menu
-                    const row = menuWindow.row
                     DesktopService.closeMenu()
                     switch (id) {
                     case "arrange":
                         DesktopService.edit(true, root.screenName)
-                        break
-                    case "note":
-                        NotesService.create()
-                        ModuleService.requestPanel("notes")
                         break
                     case "wallpaper":
                         ModuleService.requestPanel("appearance")
@@ -484,12 +493,6 @@ PanelWindow {
                     case "settings":
                         DesktopService.settingsRequested()
                         break
-                    case "open": {
-                        const note = NotesService.noteFor(row)
-                        NotesService.open(note ? note.key : "")
-                        ModuleService.requestPanel("notes")
-                        break
-                    }
                     case "edit":
                         DesktopService.edit(true, root.screenName)
                         DesktopService.selected = menu.key

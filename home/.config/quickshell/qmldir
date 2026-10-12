@@ -41,9 +41,6 @@ singleton MachineService     1.0 services/MachineService.qml
 singleton DesktopService     1.0 services/DesktopService.qml
 singleton DockService        1.0 services/DockService.qml
 singleton ControlsService    1.0 services/ControlsService.qml
-singleton NotesService       1.0 services/NotesService.qml
-singleton TasksService       1.0 services/TasksService.qml
-singleton DeckService        1.0 services/DeckService.qml
 singleton PickerService      1.0 services/PickerService.qml
 singleton CaptureService     1.0 services/CaptureService.qml
 singleton RecorderService    1.0 services/RecorderService.qml
@@ -106,11 +103,9 @@ MotionPreview    1.0 components/MotionPreview.qml
 IslandMotionPreview 1.0 components/IslandMotionPreview.qml
 GroundSwatch     1.0 components/GroundSwatch.qml
 EditTray         1.0 components/EditTray.qml
-Sticky           1.0 components/Sticky.qml
 PopMenu          1.0 components/PopMenu.qml
 
 Bar              1.0 bar/Bar.qml
-Deck             1.0 deck/Deck.qml
 DynamicIsland    1.0 bar/widgets/DynamicIsland.qml
 WorkspacesWidget 1.0 bar/widgets/WorkspacesWidget.qml
 TrayWidget       1.0 bar/widgets/TrayWidget.qml
@@ -146,7 +141,6 @@ BluetoothModule  1.0 bar/modules/BluetoothModule.qml
 WeatherModule    1.0 bar/modules/WeatherModule.qml
 StatsModule      1.0 bar/modules/StatsModule.qml
 UpdatesModule    1.0 bar/modules/UpdatesModule.qml
-NotesModule      1.0 bar/modules/NotesModule.qml
 NotificationsModule 1.0 bar/modules/NotificationsModule.qml
 ChipFace         1.0 bar/modules/ChipFace.qml
 
@@ -175,8 +169,6 @@ CalendarCard     1.0 bar/island/controls/CalendarCard.qml
 LockScreen       1.0 lock/LockScreen.qml
 LockSurface      1.0 lock/LockSurface.qml
 SessionPanel     1.0 bar/island/SessionPanel.qml
-NotesPanel       1.0 bar/island/NotesPanel.qml
-BoardPanel       1.0 bar/island/BoardPanel.qml
 KeysPanel        1.0 bar/island/KeysPanel.qml
 PackagesPanel    1.0 bar/island/PackagesPanel.qml
 NotificationList 1.0 bar/island/controls/NotificationList.qml

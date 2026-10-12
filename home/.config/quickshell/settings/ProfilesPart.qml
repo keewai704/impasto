@@ -93,7 +93,7 @@ Item {
         width: root.width
         title: Tr.t("Profiles")
         note: Tr.t("Changes are saved to the profile in use as you make them.")
-        hint: Tr.t("A profile holds the bar, widgets, dock, launcher, control centre, look, keys and wallpaper with its palette. Screens, your name and picture, language, weather location, GitHub user, Do not disturb and night light stay with the machine, and notes, tasks and clipboard are shared by every profile.")
+        hint: Tr.t("A profile holds the bar, widgets, dock, launcher, control centre, look, keys and wallpaper with its palette. Screens, your name and picture, language, weather location, GitHub user, Do not disturb and night light stay with the machine, and clipboard history is shared by every profile.")
 
         Repeater {
             model: ProfileService.profiles

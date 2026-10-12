@@ -318,8 +318,6 @@ QtObject {
             "Solid": "Sólido",
             "Two colours": "Dos colores",
             "Calendar": "Calendario",
-            "Notes": "Notas",
-            "Tasks": "Tareas",
             "Clock": "Reloj",
             "Photo": "Foto",
 
@@ -351,16 +349,7 @@ QtObject {
             "No such profile — the last grid is still showing":
                 "No existe ese perfil — se sigue mostrando la última cuadrícula",
 
-            "A note on the wallpaper is written the same way as one in the panel.":
-                "Una nota en el fondo se escribe igual que una del panel.",
-            "Handwriting": "A mano",
-            "The signature's script": "La letra de la firma",
-            "The interface face": "La tipografía de la interfaz",
-            "The notes stuck on the screen's edges leave when a window opens on the workspace and come back when the last one closes. Off, they stay over the windows.":
-                "Las notas pegadas a los bordes se retiran cuando se abre una ventana en el espacio de trabajo y vuelven cuando se cierra la última. Apagado, se quedan sobre las ventanas.",
-            "Edges only on an empty workspace": "Bordes solo en un espacio vacío",
             "Gone while a window is open": "Fuera mientras haya una ventana abierta",
-            "Over the windows": "Sobre las ventanas",
 
             // ── DESKTOP ─────────────────────────────────────────────────────
             "The desktop": "El escritorio",
@@ -389,15 +378,9 @@ QtObject {
             "Large": "Grande",
             "Band": "Banda",
 
-            "Notes on the edge": "Notas en el borde",
             "Where": "Dónde",
             "Grid": "Cuadrícula",
             "Along the edge": "A lo largo del borde",
-            "Which notes": "Qué notas",
-            "New notes land here": "Las notas nuevas van aquí",
-            "Which note": "Qué nota",
-            "The newest": "La más reciente",
-            "New note": "Nota nueva",
             "Choose…": "Elegir…",
             "Caption": "Pie de foto",
             "Written under the picture": "Escrito bajo la foto",
@@ -445,7 +428,6 @@ QtObject {
             "Workspace overview": "Vista de espacios",
             "Session menu": "Menú de sesión",
             "Lock the screen": "Bloquear la pantalla",
-            "Task board": "Tablero de tareas",
             "Packages": "Paquetes",
 
             "Toggles": "Conmutadores",
@@ -580,8 +562,6 @@ QtObject {
             "Open a panel or an action": "Abre un panel o una acción",
             "Find an open window": "Encuentra una ventana abierta",
             "Start a countdown": "Inicia una cuenta atrás",
-            "Note": "Nota",
-            "Keep a note": "Guarda una nota",
             "Copy something again": "Vuelve a copiar algo",
             "Emoji": "Emoji",
             "Copy an emoji": "Copia un emoji",
@@ -889,8 +869,8 @@ QtObject {
             // ── SYSTEM ──────────────────────────────────────────────────────
             "Changes are saved to the profile in use as you make them.":
                 "Los cambios se guardan en el perfil en uso a medida que los haces.",
-            "A profile holds the bar, widgets, dock, launcher, control centre, look, keys and wallpaper with its palette. Screens, your name and picture, language, weather location, GitHub user, Do not disturb and night light stay with the machine, and notes, tasks and clipboard are shared by every profile.":
-                "Un perfil guarda la barra, los widgets, el dock, el lanzador, el centro de control, el aspecto, las teclas y el fondo con su paleta. Las pantallas, tu nombre y foto, el idioma, la ubicación del tiempo, el usuario de GitHub, No molestar y la luz nocturna se quedan con la máquina, y las notas, las tareas y el portapapeles son comunes a todos los perfiles.",
+            "A profile holds the bar, widgets, dock, launcher, control centre, look, keys and wallpaper with its palette. Screens, your name and picture, language, weather location, GitHub user, Do not disturb and night light stay with the machine, and clipboard history is shared by every profile.":
+                "Un perfil guarda la barra, los widgets, el dock, el lanzador, el centro de control, el aspecto, las teclas y el fondo con su paleta. Las pantallas, tu nombre y foto, el idioma, la ubicación del tiempo, el usuario de GitHub, No molestar y la luz nocturna se quedan con la máquina, y el historial del portapapeles es común a todos los perfiles.",
             "Profile": "Perfil",
             "New profile": "Perfil nuevo",
             "Import…": "Importar…",

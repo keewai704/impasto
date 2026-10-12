@@ -28,7 +28,7 @@ Item {
     // Colours resolved by the widget. Faces read this rather than `Theme`.
     property var ink: DesktopService.inkFor(null)
 
-    // The desktop row, for faces that draw what it names (a note).
+    // The desktop row, for faces that draw the picture it names.
     property var row: null
 
     readonly property var components: ({
@@ -47,8 +47,6 @@ Item {
         media: mediaSquare,
         clock: clockSquare,
         calendar: calendarSquare,
-        notes: notesSquare,
-        tasks: tasksSquare,
         photo: photoSquare
     })
 
@@ -381,95 +379,35 @@ Item {
         }
     }
 
-    // The date; the month is the 4×4 face. The square is today, so pressing it
-    // with tasks shows today's list, as a pressed day does on the larger faces.
-    // The square returns via the arrow or when the pointer leaves.
+    // The date; the month is the 4×4 face.
     Component {
         id: calendarSquare
 
-        Item {
-            id: leaf
+        WidgetFace {
 
-            property bool open: false
+            ink: root.ink
+            id: calendarFace
 
-            HoverHandler {
-                onHoveredChanged: {
-                    if (!hovered)
-                        leaf.open = false
-                }
+            readonly property date today: calendarClock.date
+
+            label: Qt.formatDateTime(calendarClock.date, "MMMM")
+            reading: `${calendarFace.today.getDate()}`
+            note: Qt.formatDateTime(calendarClock.date, "dddd")
+
+            SystemClock {
+                id: calendarClock
+                precision: SystemClock.Minutes
             }
 
-            WidgetFace {
-
-                ink: root.ink
-                id: calendarFace
-
-                anchors.fill: parent
-                opacity: leaf.open ? 0 : 1
-                visible: opacity > 0
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-
-                readonly property date today: calendarClock.date
-
-                label: Qt.formatDateTime(calendarClock.date, "MMMM")
-                reading: `${calendarFace.today.getDate()}`
-                // The weekday, and how much of today is left when there are
-                // tasks.
-                note: {
-                    const weekday = Qt.formatDateTime(calendarClock.date, "dddd")
-                    const left = TasksService.pendingOn(TasksService.todayKey)
-                    return left > 0 ? `${weekday} · ${left} to do` : weekday
-                }
-
-                SystemClock {
-                    id: calendarClock
-                    precision: SystemClock.Minutes
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰃭"
-                    font.family: Theme.fontMono
-                    font.pixelSize: 30
-                    color: root.ink.text
-                }
-
-                HoverHandler {
-                    enabled: TasksService.countOn(TasksService.todayKey) > 0
-                    cursorShape: Qt.PointingHandCursor
-                }
-
-                TapHandler {
-                    enabled: TasksService.countOn(TasksService.todayKey) > 0
-                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                    onTapped: leaf.open = true
-                }
+            Text {
+                anchors.centerIn: parent
+                text: "󰃭"
+                font.family: Theme.fontMono
+                font.pixelSize: 30
+                color: root.ink.text
             }
 
-            DayTasks {
-                anchors.fill: parent
-                anchors.margins: 16
-                day: leaf.open ? TasksService.todayKey : ""
-                opacity: leaf.open ? 1 : 0
-                visible: opacity > 0
-                ink: ({
-                    text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                    accentText: root.ink.accentText, raised: root.ink.raised,
-                    red: Theme.red, rule: root.ink.dim
-                })
-                onBack: leaf.open = false
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-            }
         }
-    }
-
-    // Notes use one face for all four families.
-    Component {
-        id: notesSquare
-
-        NoteFace { ink: root.ink; row: root.row; family: "2x2" }
     }
 
     // A picture of your own, one face for all four families; see `PhotoFace`.
@@ -486,27 +424,4 @@ Item {
         GithubFace { ink: root.ink; family: "2x2" }
     }
 
-    // Tasks left, and one line: overdue, else due today, else the next one.
-    Component {
-        id: tasksSquare
-
-        WidgetFace {
-
-            ink: root.ink
-            label: "Tasks"
-            reading: `${TasksService.pending}`
-            note: TasksService.pending === 0
-                ? (TasksService.count === 0 ? "nothing yet" : "all done")
-                : TasksService.summary
-            tint: TasksService.overdue.length > 0 ? Theme.red : root.ink.text
-
-            Text {
-                anchors.centerIn: parent
-                text: "󰄲"
-                font.family: Theme.fontMono
-                font.pixelSize: 30
-                color: root.ink.text
-            }
-        }
-    }
 }

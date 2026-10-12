@@ -12,7 +12,7 @@ import QtQuick
 import "../../../theme"
 
 // Paper for calendar leaves, a watch's date window and parcel labels: the text
-// colour under the notes' wash, written on in the notes' ink.
+// colour washed towards white, with dark ink.
 Item {
     id: root
 

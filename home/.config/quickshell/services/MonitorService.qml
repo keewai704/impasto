@@ -102,7 +102,7 @@ Singleton {
     // ── PRIMARY SCREEN ──────────────────────────────────────────────────────
     //
     // The shell's notion, not Hyprland's: the screen that carries the island,
-    // the widgets and the note deck. Stored by description, matched to a
+    // the desktop widgets. Stored by description, matched to a
     // `ShellScreen` by connector name. Falls back to the first screen, which
     // also covers a primary that was just disabled, since disabled outputs
     // drop out of `Quickshell.screens`.

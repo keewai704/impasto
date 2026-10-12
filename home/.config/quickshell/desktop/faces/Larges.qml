@@ -28,7 +28,7 @@ Item {
     // Colours resolved by the widget. Faces read this rather than `Theme`.
     property var ink: DesktopService.inkFor(null)
 
-    // The desktop row, for faces that draw what it names (a note).
+    // The desktop row, for faces that draw the picture it names.
     property var row: null
 
     readonly property var components: ({
@@ -38,8 +38,6 @@ Item {
         media: mediaLarge,
         claude: claudeLarge,
         codex: codexLarge,
-        notes: notesLarge,
-        tasks: tasksLarge,
         photo: photoLarge,
         spectrum: spectrumLarge
     })
@@ -388,19 +386,6 @@ Item {
 
             readonly property date today: calendarClock.date
 
-            // Pressing a day with tasks turns the widget into that day's list,
-            // as in the control centre's month. The month returns via the arrow
-            // or when the pointer leaves, so the widget never stays on a stale
-            // day.
-            property string picked: ""
-
-            HoverHandler {
-                onHoveredChanged: {
-                    if (!hovered)
-                        month.picked = ""
-                }
-            }
-
             readonly property var cells: {
                 const year = month.today.getFullYear()
                 const index = month.today.getMonth()
@@ -425,10 +410,6 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 22
                 spacing: 10
-                opacity: month.picked === "" ? 1 : 0
-                visible: opacity > 0
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -491,12 +472,6 @@ Item {
 
                             readonly property bool today:
                                 cell.modelData === month.today.getDate()
-                            readonly property string key: cell.modelData > 0
-                                ? TasksService.dayKey(new Date(month.today.getFullYear(),
-                                    month.today.getMonth(), cell.modelData)) : ""
-                            readonly property int tasks: cell.key !== "" ? TasksService.countOn(cell.key) : 0
-                            readonly property int pending: cell.key !== "" ? TasksService.pendingOn(cell.key) : 0
-                            readonly property bool picked: cell.key !== "" && month.picked === cell.key && !cell.today
 
                             width: grid.cellWidth
                             height: grid.cellHeight
@@ -506,15 +481,13 @@ Item {
                                 width: Math.min(parent.width, parent.height) - 6
                                 height: width
                                 radius: width / 2
-                                visible: cell.today || cell.picked
+                                visible: cell.today
                                 color: cell.today ? root.ink.accent : "transparent"
                                 border.color: root.ink.accent
-                                border.width: cell.picked ? 1 : 0
                             }
 
                             Text {
                                 anchors.centerIn: parent
-                                anchors.verticalCenterOffset: cell.tasks > 0 ? -1 : 0
                                 visible: cell.modelData > 0
                                 text: `${cell.modelData}`
                                 font.family: Theme.fontFamily
@@ -523,108 +496,12 @@ Item {
                                 color: cell.today ? root.ink.accentText : root.ink.text
                             }
 
-                            // A task due that day.
-                            Rectangle {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 4
-                                visible: cell.tasks > 0
-                                width: 3
-                                height: 3
-                                radius: 1.5
-                                color: cell.today ? root.ink.accentText
-                                    : (cell.pending > 0 ? root.ink.accent : root.ink.muted)
-                            }
-
-                            HoverHandler {
-                                enabled: cell.tasks > 0
-                                cursorShape: Qt.PointingHandCursor
-                            }
-
-                            TapHandler {
-                                enabled: cell.tasks > 0
-                                gesturePolicy: TapHandler.ReleaseWithinBounds
-                                onTapped: month.picked = cell.key
-                            }
                         }
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 1
-                    color: root.ink.dim
-                }
-
-                // Today's tasks under the month: the count and up to two of
-                // them.
-                ColumnLayout {
-                    id: agenda
-
-                    readonly property string day: TasksService.todayKey
-                    readonly property var due: TasksService.on(agenda.day)
-
-                    Layout.fillWidth: true
-                    spacing: 3
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: {
-                            const name = agenda.day === TasksService.todayKey ? "Today"
-                                : Qt.formatDate(TasksService.dateOf(agenda.day), "dddd d")
-                            const n = agenda.due.length
-                            const left = agenda.due.filter(task => task.state !== "done").length
-                            return n === 0 ? `${name} · nothing due` : `${name} · ${left} of ${n} to do`
-                        }
-                        elide: Text.ElideRight
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeLabel
-                        font.weight: Font.DemiBold
-                        color: root.ink.muted
-                    }
-
-                    Repeater {
-                        model: ScriptModel {
-                            values: agenda.due.slice(0, 2)
-                            objectProp: "key"
-                        }
-
-                        TaskRow {
-                            required property var modelData
-
-                            Layout.fillWidth: true
-                            task: modelData
-                            dated: false
-                            ink: ({
-                                text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                                accentText: root.ink.accentText, raised: root.ink.raised, red: Theme.red
-                            })
-                            onOpened: {
-                                TasksService.open(modelData.key)
-                                ModuleService.requestPanel("board")
-                            }
-                        }
-                    }
-                }
             }
 
-            // ── ONE DAY ─────────────────────────────────────────────────────
-
-            DayTasks {
-                anchors.fill: parent
-                anchors.margins: 22
-                day: month.picked
-                opacity: month.picked !== "" ? 1 : 0
-                visible: opacity > 0
-                ink: ({
-                    text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                    accentText: root.ink.accentText, raised: root.ink.raised,
-                    red: Theme.red, rule: root.ink.dim
-                })
-                onBack: month.picked = ""
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-            }
         }
     }
 
@@ -739,74 +616,11 @@ Item {
         }
     }
 
-    // A note is its text at any size; see `NoteFace`.
-    Component {
-        id: notesLarge
-
-        NoteFace { ink: root.ink; row: root.row; family: "4x4" }
-    }
-
     // A picture of your own; see `PhotoFace`.
     Component {
         id: photoLarge
 
         PhotoFace { ink: root.ink; row: root.row; family: "4x4" }
-    }
-
-    // The 2×2 with its middle filled in: the next six tasks, soonest first,
-    // each with its day and checkbox.
-    Component {
-        id: tasksLarge
-
-        WidgetFace {
-
-            ink: root.ink
-            label: "Tasks"
-            reading: `${TasksService.pending}`
-            note: TasksService.pending === 0
-                ? (TasksService.count === 0 ? "nothing yet" : "all done")
-                : TasksService.summary
-            tint: TasksService.overdue.length > 0 ? Theme.red : root.ink.text
-
-            Text {
-                anchors.centerIn: parent
-                text: "󰄲"
-                font.family: Theme.fontMono
-                font.pixelSize: 30
-                color: root.ink.text
-            }
-
-            body: [
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    spacing: 2
-
-                    Repeater {
-                        model: ScriptModel {
-                            values: TasksService.queue.slice(0, 6)
-                            objectProp: "key"
-                        }
-
-                        TaskRow {
-                            required property var modelData
-
-                            width: parent.width
-                            task: modelData
-                            ink: ({
-                                text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                                accentText: root.ink.accentText, raised: root.ink.raised, red: Theme.red
-                            })
-                            onOpened: {
-                                TasksService.open(modelData.key)
-                                ModuleService.requestPanel("board")
-                            }
-                        }
-                    }
-                }
-            ]
-        }
     }
 
     // The bars in a capsule; see `SpectrumFace`.

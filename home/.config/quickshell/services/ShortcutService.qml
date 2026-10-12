@@ -44,8 +44,6 @@ Singleton {
         { name: "stats",          label: "System statistics",    description: "Shell · Open system statistics" },
         { name: "session",        label: "Session menu",         description: "Session · Session menu" },
         { name: "lock",           label: "Lock the screen",      description: "Session · Lock the screen" },
-        { name: "notes",          label: "Notes",                description: "Shell · Open the notes" },
-        { name: "board",          label: "Task board",           description: "Shell · Open the task board" },
         { name: "keys",           label: "Keys",                 description: "Shell · Show every key" },
         { name: "zen",            label: "Zen",                  description: "Shell · Hide or show the bar" },
         { name: "widgets",        label: "Hide the widgets",     description: "Shell · Hide or show the desktop widgets" },
@@ -65,7 +63,18 @@ Singleton {
         { name: "record",         label: "Record the screen",    description: "Shell · Start or stop recording the screen" }
     ]
 
-    readonly property var keys: SettingsService.keys
+    // Ignore shortcuts retained by profiles from before these panels were removed.
+    readonly property var removedDescriptions: ["Shell · Open the notes", "Shell · Open the task board"]
+
+    readonly property var keys: {
+        const kept = SettingsService.keys ?? ({})
+        const out = ({})
+        for (const description in kept) {
+            if (root.removedDescriptions.indexOf(description) < 0)
+                out[description] = kept[description]
+        }
+        return out
+    }
 
     // ── TABLE ───────────────────────────────────────────────────────────────
     //
@@ -78,7 +87,8 @@ Singleton {
         const rows = []
         const seen = ({})
         const add = (description, bound) => {
-            if (description === "" || seen[description])
+            if (description === "" || seen[description]
+                    || root.removedDescriptions.indexOf(description) >= 0)
                 return
             seen[description] = true
             const own = kept[description]

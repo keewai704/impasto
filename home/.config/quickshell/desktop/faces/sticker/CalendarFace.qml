@@ -12,13 +12,8 @@ import Quickshell
 
 import "../../../theme"
 import "../../../services"
-import ".."
 
-// Today as a soft red sticker, the weekday over the date, with a round one
-// on its corner counting what is due; wide, the month and the day's agenda
-// on a tag beside it. At 4×4 the month on a sheet of vinyl, today on a red
-// seal. A day with something due, pressed, turns the widget into that day
-// (`DayTasks`, on a sheet of its own) until the pointer leaves or the arrow.
+// Today on a red sticker, or the current month on a sheet of vinyl.
 Item {
     id: root
 
@@ -28,42 +23,13 @@ Item {
 
     readonly property date today: clock.date
     readonly property real side: Math.min(root.width, root.height)
-    readonly property int dueToday: TasksService.pendingOn(TasksService.todayKey)
-
-    // The pressed day, while its sheet is shown.
-    property string picked: ""
-
-    // What is written on the vinyl: the notes' ink, which stays dark.
-    readonly property var paperInk: ({
-        text: Theme.paperInk, muted: Theme.paperInkMuted, accent: root.ink.accent,
-        accentText: root.ink.accentText,
-        raised: Qt.rgba(Theme.paperInk.r, Theme.paperInk.g, Theme.paperInk.b, 0.08),
-        red: Theme.red,
-        rule: Qt.rgba(Theme.paperInkMuted.r, Theme.paperInkMuted.g, Theme.paperInkMuted.b, 0.4)
-    })
 
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
     }
 
-    HoverHandler {
-        onHoveredChanged: {
-            if (!hovered)
-                root.picked = ""
-        }
-    }
-
     Tone { id: tone; hue: root.ink.red }
-
-    function agendaLine(): string {
-        if (root.dueToday > 0)
-            return `${root.dueToday} to do today`
-        const next = TasksService.next
-        if (next)
-            return `${next.text} · ${TasksService.dueLabel(next.due)}`
-        return "nothing due"
-    }
 
     component Day: Cut {
         id: day
@@ -96,25 +62,12 @@ Item {
             }
         }
 
-        HoverHandler {
-            enabled: TasksService.countOn(TasksService.todayKey) > 0
-            cursorShape: Qt.PointingHandCursor
-        }
-
-        TapHandler {
-            enabled: TasksService.countOn(TasksService.todayKey) > 0
-            gesturePolicy: TapHandler.ReleaseWithinBounds
-            onTapped: root.picked = TasksService.todayKey
-        }
     }
 
     Loader {
         anchors.fill: parent
-        opacity: root.picked !== "" ? 0 : 1
-        visible: opacity > 0
         sourceComponent: root.family === "4x4" ? month : room
 
-        Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
     }
 
     Component {
@@ -126,7 +79,7 @@ Item {
             seed: root.seed
             hue: root.ink.red
             reading: Qt.formatDateTime(root.today, "MMMM")
-            note: root.agendaLine()
+            note: Qt.formatDateTime(root.today, "yyyy")
 
             Day {
                 anchors.centerIn: parent
@@ -134,17 +87,6 @@ Item {
                 height: parent.height
             }
 
-            Dot {
-                visible: root.dueToday > 0
-                live: false
-                x: parent.width * 0.7
-                y: -parent.height * 0.02
-                width: parent.width * 0.32
-                height: width
-                seed: root.seed + "due"
-                hue: root.ink.accent
-                glyph: `${root.dueToday}`
-            }
         }
     }
 
@@ -229,11 +171,6 @@ Item {
                         required property int modelData
 
                         readonly property bool today: cell.modelData === root.today.getDate()
-                        readonly property string key: cell.modelData > 0
-                            ? TasksService.dayKey(new Date(root.today.getFullYear(),
-                                root.today.getMonth(), cell.modelData)) : ""
-                        readonly property int tasks: cell.key !== "" ? TasksService.countOn(cell.key) : 0
-                        readonly property int pending: cell.key !== "" ? TasksService.pendingOn(cell.key) : 0
 
                         width: grid.cellWidth
                         height: grid.cellHeight
@@ -252,7 +189,6 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            anchors.verticalCenterOffset: cell.tasks > 0 ? -1 : 0
                             visible: cell.modelData > 0
                             text: `${cell.modelData}`
                             font.family: Theme.fontFamily
@@ -261,55 +197,10 @@ Item {
                             color: cell.today ? root.ink.paper : Theme.paperInk
                         }
 
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 2
-                            visible: cell.tasks > 0
-                            width: 4
-                            height: 4
-                            radius: 2
-                            color: cell.today ? root.ink.paper
-                                : (cell.pending > 0 ? tone.deep : Theme.paperInkMuted)
-                        }
-
-                        HoverHandler {
-                            enabled: cell.tasks > 0
-                            cursorShape: Qt.PointingHandCursor
-                        }
-
-                        TapHandler {
-                            enabled: cell.tasks > 0
-                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                            onTapped: root.picked = cell.key
-                        }
                     }
                 }
             }
         }
     }
 
-    // ── ONE DAY ─────────────────────────────────────────────────────────────
-
-    Cut {
-        id: daySheet
-
-        anchors.fill: parent
-        anchors.margins: root.side * 0.05
-        shape: "soft"
-        lean: 0
-        fill: root.ink.paper
-        opacity: root.picked !== "" ? 1 : 0
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-
-        DayTasks {
-            anchors.fill: parent
-            anchors.margins: daySheet.side * 0.08
-            day: root.picked
-            ink: root.paperInk
-            onBack: root.picked = ""
-        }
-    }
 }

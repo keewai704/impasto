@@ -180,18 +180,6 @@ ShellRoot {
         }
     }
 
-    // Notes docked on the screen edges, on every screen, for the desktop's
-    // reason. A deck is a row like a widget and carries its screen too.
-    Variants {
-        model: Quickshell.screens
-
-        Deck {
-            required property var modelData
-
-            screen: modelData
-        }
-    }
-
     // A normal window rather than an island panel, so the island stays
     // visible while its settings change.
     SettingsWindow {
@@ -374,18 +362,6 @@ ShellRoot {
         name: "effects"
         description: "Open the island wallpaper effects"
         onPressed: root.island?.toggle("effects")
-    }
-
-    GlobalShortcut {
-        name: "notes"
-        description: "Open the notes"
-        onPressed: root.island?.toggle("notes")
-    }
-
-    GlobalShortcut {
-        name: "board"
-        description: "Open the task board"
-        onPressed: root.island?.toggle("board")
     }
 
     GlobalShortcut {

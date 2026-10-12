@@ -27,12 +27,8 @@ import "../theme"
 // Rows are keyed by `key`, not module id, so a module can be placed twice.
 // Rows without a key use their module id.
 //
-// Notes can also sit on the left, right or bottom screen edge as a deck: a
-// row with `edge` and a `notes` list instead of a cell. A note is shown in
-// one place at a time. `DeckService` holds the deck geometry.
-//
 // The spectrum is the same: a widget on the grid, or sound bars along the
-// whole of an edge — a row with `edge` and no `notes`, one per edge.
+// whole of an edge — a row with `edge`, one per edge.
 //
 // Every row carries the screen it is on, and every board has a grid of its
 // own, so a cell means nothing without a screen to go with it: the functions
@@ -84,8 +80,7 @@ Singleton {
         { id: "sticker",  label: "Sticker" }
     ]
 
-    // The lyrics have one face in every theme, as a note is paper in every
-    // theme: a sentence is not an object to draw.
+    // The lyrics have one face in every theme.
     function themeOf(widget: var): string {
         if (widget && widget.id === "lyrics")
             return "lyrics"
@@ -111,7 +106,6 @@ Singleton {
             weather: ["2x2", "4x2", "4x4", "8x2"],  stats: ["2x2", "4x2", "4x4"],
             github: ["2x2", "4x2", "8x2"],
             updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
-            notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "8x2"],           photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
         },
@@ -124,7 +118,6 @@ Singleton {
             weather: ["2x2", "4x2", "4x4", "8x2"],  stats: ["2x2", "4x2", "4x4"],
             github: ["2x2", "4x2", "8x2"],
             updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
-            notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "4x4", "8x2"],    photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
         },
@@ -142,7 +135,6 @@ Singleton {
             weather: ["2x2", "4x2", "8x2"],         stats: ["2x2", "4x2"],
             github: ["2x2", "4x2", "8x2"],
             updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
-            notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "4x4", "8x2"],    photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
         }
@@ -200,8 +192,8 @@ Singleton {
     //
     // The desktop surface covers the whole screen and ignores exclusive zones
     // so drags can cross the bar. The board is the surface minus the bar and
-    // dock reservations; the decks share these insets, and the grid is laid
-    // out as if there were no dock (`wholeGrid`).
+    // dock reservations, and the grid is laid out as if there were no dock
+    // (`wholeGrid`).
     // One answer for every board: the dock's band is kept clear wherever the
     // dock could be, not where it happens to be painting (`DockService.zone`),
     // so nothing on a grid moves because a window went fullscreen or a hand
@@ -240,10 +232,6 @@ Singleton {
 
     function widgetsOn(name: string): var {
         return root.squares.filter(widget => root.nameOf(widget) === name)
-    }
-
-    function decksOn(name: string): var {
-        return root.decks.filter(deck => root.nameOf(deck) === name)
     }
 
     // ── BOARDS ──────────────────────────────────────────────────────────────
@@ -316,8 +304,14 @@ Singleton {
     // screen's own edge: the grid runs on under a dock's band, so a square
     // there is not an edge.
     function edgeAt(x: real, y: real, width: real, height: real): string {
-        return DeckService.edgeAt(x + root.insets.left, y,
-            width + root.insets.left + root.insets.right, height + root.insets.bottom)
+        const reach = 72
+        if (x + root.insets.left <= reach)
+            return "left"
+        if (x >= width + root.insets.right - reach)
+            return "right"
+        if (y >= height + root.insets.bottom - reach)
+            return "bottom"
+        return ""
     }
 
     // Every widget off the picture (`desktopHidden`), except while arranging.
@@ -410,13 +404,9 @@ Singleton {
 
     property var widgets: root.normalise(SettingsService.desktopWidgets)
 
-    // A row on an edge rather than on a cell: a deck of notes, or a spectrum.
+    // A row on an edge rather than on a cell.
     function isEdge(widget: var): bool {
         return widget && typeof widget.edge === "string" && widget.edge !== ""
-    }
-
-    function isDeck(widget: var): bool {
-        return root.isEdge(widget) && widget.id !== "spectrum"
     }
 
     // A spectrum on an edge; one on the grid is a square like any widget.
@@ -424,7 +414,6 @@ Singleton {
         return root.isEdge(widget) && widget.id === "spectrum"
     }
 
-    readonly property var decks: root.widgets.filter(widget => root.isDeck(widget))
     readonly property var spectra: root.widgets.filter(widget => root.isSpectrum(widget))
     readonly property var squares: root.widgets.filter(widget => !root.isEdge(widget))
 
@@ -449,26 +438,16 @@ Singleton {
     // ("Nothing playing") instead of disappearing.
     readonly property var shown: root.squares
 
-    // Non-empty decks, or all of them while arranging.
-    readonly property var shownDecks: root.editing
-        ? root.decks
-        : root.decks.filter(deck => root.deckNotes(deck).length > 0)
-
     // Keys of drawn widgets, per screen, each list reassigned only when that
     // screen's set changes. A surface's Repeater uses these instead of the
     // rows, since a new array would rebuild every delegate on each move or
     // resize — and a board that has not changed must keep the very array it
     // had, not an equal one.
     property var keys: ({})
-    property var deckKeys: ({})
     property var spectrumKeys: ({})
 
     function keysOn(name: string): var {
         return root.keys[name] ?? []
-    }
-
-    function deckKeysOn(name: string): var {
-        return root.deckKeys[name] ?? []
     }
 
     function spectrumKeysOn(name: string): var {
@@ -476,7 +455,6 @@ Singleton {
     }
 
     onShownChanged: root.syncKeys()
-    onShownDecksChanged: root.syncKeys()
     onSpectraChanged: root.syncKeys()
     onBoardsChanged: root.syncKeys()
     Component.onCompleted: root.syncKeys()
@@ -492,7 +470,6 @@ Singleton {
 
     function syncKeys(): void {
         root.keys = root.sameOrNew(root.keys, root.sortByScreen(root.shown))
-        root.deckKeys = root.sameOrNew(root.deckKeys, root.sortByScreen(root.shownDecks))
         root.spectrumKeys = root.sameOrNew(root.spectrumKeys, root.sortByScreen(root.spectra))
     }
 
@@ -551,12 +528,6 @@ Singleton {
     function geometry(widget: var, boardWidth: real, boardHeight: real): var {
         if (root.isSpectrum(widget))
             return root.spectrumBox(root.nameOf(widget), widget, boardWidth, boardHeight)
-        if (root.isDeck(widget)) {
-            const count = root.deckNotes(widget).length
-            return DeckService.stripBox(widget.edge, count,
-                DeckService.startOf(widget.edge, count, root.alongOf(widget), boardWidth, boardHeight),
-                boardWidth, boardHeight)
-        }
         const name = root.nameOf(widget)
         const shape = root.family(root.familyOf(widget))
         const spot = root.spotOf(widget)
@@ -730,10 +701,9 @@ Singleton {
     }
 
     // Adds a widget at its smallest family, at or near the given cell, else
-    // at the first free one. Returns "" if there is no room. `fields` are
-    // extra row fields (e.g. which note), so pinning is a single write.
-    function add(id: string, name: string, col = -1, row = -1, fields = null): string {
-        if (!ModuleService.entry(id))
+    // at the first free one. Returns "" if it is unavailable or there is no room.
+    function add(id: string, name: string, col = -1, row = -1): string {
+        if (!root.offerable.some(entry => entry.id === id))
             return ""
         const familyId = root.familiesFor(id)[0] ?? "4x2"
         const spot = col >= 0
@@ -742,13 +712,13 @@ Singleton {
         if (!spot)
             return ""
         const key = root.newKey(id)
-        const row_ = Object.assign({}, fields ?? ({}), {
+        const row_ = {
             key: key,
             id: id,
             col: spot.col,
             row: spot.row,
             family: familyId
-        })
+        }
         const screen = root.screenField(name)
         if (screen !== null)
             row_.screen = screen
@@ -762,214 +732,6 @@ Singleton {
         root.write(root.widgets.filter(widget => widget.key !== key))
     }
 
-    // Removes every row whose `field` equals `value` (e.g. an archived note).
-    function removeMatching(field: string, value: var): void {
-        const kept = root.widgets.filter(widget => widget[field] !== value)
-        if (kept.length === root.widgets.length)
-            return
-        if (root.selected !== "" && !kept.some(widget => widget.key === root.selected))
-            root.selected = ""
-        root.write(kept)
-    }
-
-    // ── DECKS ───────────────────────────────────────────────────────────────
-    //
-    // One deck per edge; empty decks are removed. Every move first removes
-    // the note from wherever it was.
-
-    readonly property var edges: ["left", "right", "bottom"]
-
-    function deckOn(name: string, edge: string): var {
-        return root.decksOn(name).find(deck => deck.edge === edge) ?? null
-    }
-
-    // Live, unarchived note keys on a deck, as a plain array.
-    function deckNotes(deck: var): var {
-        const list = deck && deck.notes ? deck.notes : []
-        const keys = []
-        const length = typeof list.length === "number" ? list.length : 0
-        for (let index = 0; index < length; index++) {
-            if (typeof list[index] === "string" && NotesService.entry(list[index])
-                    && !NotesService.entry(list[index]).archived)
-                keys.push(list[index])
-        }
-        return keys
-    }
-
-    // Position along the edge as a 0–1 fraction; defaults to 0.
-    function alongOf(deck: var): real {
-        const own = deck ? deck.along : undefined
-        return typeof own === "number" ? Math.max(0, Math.min(1, own)) : 0
-    }
-
-    function setDeckAlong(key: string, along: real): void {
-        if (root.isDeck(root.entryOf(key)))
-            root.update(key, { along: Math.max(0, Math.min(1, along)) })
-    }
-
-    // Where a note is: "grid", an edge, or "" for nowhere. Which screen it is
-    // on is not part of the answer: a note is in one place, and the panels
-    // that ask only want to know whether it is out on the desk.
-    function placementOf(noteKey: string): string {
-        if (root.squares.some(widget => widget.id === "notes" && widget.note === noteKey))
-            return "grid"
-        const deck = root.decks.find(deck => root.deckNotes(deck).indexOf(noteKey) >= 0)
-        return deck ? deck.edge : ""
-    }
-
-    // `list` without any widget or deck entry for this note; decks left
-    // empty are dropped.
-    function withoutNote(list: var, noteKey: string): var {
-        const kept = []
-        for (const widget of list) {
-            if (!root.isDeck(widget)) {
-                if (!(widget.id === "notes" && widget.note === noteKey))
-                    kept.push(widget)
-                continue
-            }
-            const notes = root.deckNotes(widget).filter(key => key !== noteKey)
-            if (notes.length > 0)
-                kept.push(Object.assign({}, widget, { notes: notes }))
-        }
-        return kept
-    }
-
-    function removeNote(noteKey: string): void {
-        const kept = root.withoutNote(root.widgets, noteKey)
-        if (root.selected !== "" && !kept.some(widget => widget.key === root.selected))
-            root.selected = ""
-        root.write(kept)
-    }
-
-    // Puts a note on an edge at `index`, joining the existing deck or
-    // creating one. An existing deck keeps its key and position even when
-    // this was its only note, so a tab being dragged is not destroyed.
-    function placeNote(noteKey: string, name: string, edge: string, index = -1): void {
-        if (!NotesService.entry(noteKey) || root.edges.indexOf(edge) < 0)
-            return
-        const target = root.deckOn(name, edge)
-        if (!target) {
-            const made = {
-                key: root.newKey("notes"), id: "notes", edge: edge, notes: [noteKey], along: 0
-            }
-            const screen = root.screenField(name)
-            if (screen !== null)
-                made.screen = screen
-            root.write(root.withoutNote(root.widgets, noteKey).concat([made]))
-            return
-        }
-        const notes = root.deckNotes(target).filter(key => key !== noteKey)
-        const at = index < 0 ? notes.length : Math.max(0, Math.min(notes.length, index))
-        notes.splice(at, 0, noteKey)
-        root.write(root.withoutNote(
-            root.widgets.filter(widget => widget.key !== target.key), noteKey
-        ).concat([Object.assign({}, target, { notes: notes })]))
-    }
-
-    // Moves a note to the nearest free 2×2. Returns false if there is none.
-    function noteToGrid(noteKey: string, name: string, col: int, row: int): bool {
-        if (!NotesService.entry(noteKey))
-            return false
-        const spot = root.nearestFree(name, col, row, "2x2", "")
-        if (!spot)
-            return false
-        const made = {
-            key: root.newKey("notes"), id: "notes",
-            col: spot.col, row: spot.row, family: "2x2", note: noteKey
-        }
-        const screen = root.screenField(name)
-        if (screen !== null)
-            made.screen = screen
-        root.write(root.withoutNote(root.widgets, noteKey).concat([made]))
-        return true
-    }
-
-    // A notes widget dragged to an edge: its note joins the deck there.
-    function noteToEdge(key: string, name: string, edge: string): void {
-        const widget = root.entryOf(key)
-        if (!widget || widget.id === undefined)
-            return
-        const note = NotesService.noteFor(widget)
-        if (!note)
-            return
-        if (root.selected === key)
-            root.selected = ""
-        root.placeNote(note.key, name, edge)
-    }
-
-    // Tray tile dropped on an edge: puts the newest note there.
-    function addDeck(name: string, edge: string): void {
-        const note = NotesService.newest
-        if (note)
-            root.placeNote(note.key, name, edge)
-    }
-
-    // Moves a deck to another edge, or to another screen, merging into the
-    // deck already there.
-    function setDeckEdge(key: string, name: string, edge: string): void {
-        const deck = root.entryOf(key)
-        if (!root.isDeck(deck) || root.edges.indexOf(edge) < 0)
-            return
-        if (deck.edge === edge && root.nameOf(deck) === name)
-            return
-        const other = root.deckOn(name, edge)
-        if (!other) {
-            root.update(key, { edge: edge, screen: root.screenField(name) })
-            return
-        }
-        const notes = root.deckNotes(other).concat(
-            root.deckNotes(deck).filter(note => root.deckNotes(other).indexOf(note) < 0))
-        const merged = { notes: notes }
-        if (deck.takesNew === true)
-            merged.takesNew = true
-        if (root.selected === key)
-            root.selected = other.key
-        root.write(root.widgets
-            .filter(widget => widget.key !== key)
-            .map(widget => widget.key === other.key
-                ? Object.assign({}, widget, merged) : widget))
-    }
-
-    // The one deck new notes land on, if any: `takesNew` on its row, cleared
-    // from every other deck when set, and gone with the deck when it empties.
-    function setTakesNew(key: string, on: bool): void {
-        if (!root.isDeck(root.entryOf(key)))
-            return
-        root.write(root.widgets.map(widget => {
-            if (!root.isDeck(widget))
-                return widget
-            const next = Object.assign({}, widget)
-            if (on && widget.key === key)
-                next.takesNew = true
-            else
-                delete next.takesNew
-            return next
-        }))
-    }
-
-    function noteAdded(noteKey: string): void {
-        const deck = root.decks.find(widget => widget.takesNew === true)
-        if (deck)
-            root.placeNote(noteKey, root.nameOf(deck), deck.edge)
-    }
-
-    // A note ticked on or off a deck from the inspector.
-    function toggleDeckNote(key: string, noteKey: string): void {
-        const deck = root.entryOf(key)
-        if (!root.isDeck(deck))
-            return
-        const notes = root.deckNotes(deck)
-        if (notes.indexOf(noteKey) >= 0) {
-            const left = notes.filter(note => note !== noteKey)
-            if (left.length === 0)
-                root.remove(key)
-            else
-                root.update(key, { notes: left })
-            return
-        }
-        root.placeNote(noteKey, root.nameOf(deck), deck.edge)
-    }
-
     // ── SPECTRUM ────────────────────────────────────────────────────────────
     //
     // Sound bars along a whole edge, one per edge. The box runs to the
@@ -977,6 +739,12 @@ Singleton {
     // board out by the insets: the bottom from corner to corner, a side from
     // the top of the screen, past the bar's band, to the bottom — or to the
     // top of the bottom's bars, which keep the corner, so the two never cross.
+
+    readonly property var edges: ["left", "right", "bottom"]
+
+    // Destination highlighted while a spectrum is dragged to an edge.
+    property string receivingEdge: ""
+    property string receivingScreen: ""
 
     function spectrumBox(name: string, row: var, boardWidth: real, boardHeight: real): var {
         const reach = root.spectrumOf(row).reach
@@ -1074,7 +842,7 @@ Singleton {
 
     // Gone under a fullscreen window, and with `spectrumOnEmpty` also on any
     // workspace that has windows — asked of the workspace the screen is
-    // showing, as the edges' deck is. Gone, it does not listen either.
+    // showing. Gone, it does not listen either.
     function spectrumAwayOn(name: string): bool {
         if (DockService.coveredOn(name))
             return true
@@ -1126,8 +894,8 @@ Singleton {
         root.update(key, { edge: edge, screen: root.screenField(name) })
     }
 
-    // Between the grid and an edge, as a note goes, keeping the key and the
-    // look. What only one of the two has is dropped: a square's place, shape,
+    // Between the grid and an edge, keeping the key and look.
+    // What only one of the two has is dropped: a square's place, shape,
     // face, style and capsule opacity; an edge's height and bar opacity.
     function spectrumToEdge(key: string, name: string, edge: string): void {
         const widget = root.entryOf(key)
@@ -1256,10 +1024,9 @@ Singleton {
     // capsule is the island's material. Colours always come from the active
     // palette.
 
-    // Notes draw their own paper, photos are their picture, the spectrum is
-    // its bars and a sticker is cut out of nothing: no capsule.
+    // Photos, the spectrum and stickers draw without a capsule.
     function bare(widget: var): bool {
-        return !!widget && (widget.id === "notes" || widget.id === "photo" || widget.id === "spectrum"
+        return !!widget && (widget.id === "photo" || widget.id === "spectrum"
             || root.themeOf(widget) === "sticker")
     }
 
@@ -1478,6 +1245,8 @@ Singleton {
         }
         if (!on) {
             root.dragging = ""
+            root.receivingEdge = ""
+            root.receivingScreen = ""
             root.selected = ""
             root.landing = null
             root.galleryAt = ({})

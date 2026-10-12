@@ -29,7 +29,7 @@ Item {
     // Colours resolved by the widget. Faces read this rather than `Theme`.
     property var ink: DesktopService.inkFor(null)
 
-    // The desktop row, for faces that draw what it names (a note).
+    // The desktop row, for faces that draw the picture it names.
     property var row: null
 
     readonly property var components: ({
@@ -48,8 +48,6 @@ Item {
         media: mediaWide,
         clock: clockWide,
         calendar: calendarWide,
-        notes: notesWide,
-        tasks: tasksWide,
         photo: photoWide,
         spectrum: spectrumWide
     })
@@ -739,234 +737,95 @@ Item {
     Component {
         id: calendarWide
 
-        Item {
-            id: week
-
-            // Pressing a day with tasks shows that day's list, as on the 4×4.
-            // The week returns via the arrow or when the pointer leaves.
-            property string picked: ""
-
-            HoverHandler {
-                onHoveredChanged: {
-                    if (!hovered)
-                        week.picked = ""
-                }
-            }
-
-            WidgetFace {
-
-                ink: root.ink
-                id: calendarFace
-
-                anchors.fill: parent
-                opacity: week.picked === "" ? 1 : 0
-                visible: opacity > 0
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-
-                readonly property date today: calendarClock.date
-
-                // The same label and reading as the square, so the wide face
-                // adds the week without rearranging anything.
-                label: Qt.formatDateTime(calendarClock.date, "MMMM")
-                reading: `${calendarFace.today.getDate()}`
-                // Today's count if any; else the next task due; else the
-                // weekday.
-                note: {
-                    const left = TasksService.pendingOn(TasksService.todayKey)
-                    if (left > 0)
-                        return `${left} to do today`
-                    const next = TasksService.next
-                    if (next)
-                        return `${next.text} · ${TasksService.dueLabel(next.due)}`
-                    return Qt.formatDateTime(calendarClock.date, "dddd")
-                }
-                extraShare: 0.5
-
-                SystemClock {
-                    id: calendarClock
-                    precision: SystemClock.Minutes
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰃭"
-                    font.family: Theme.fontMono
-                    font.pixelSize: 30
-                    color: root.ink.text
-                }
-
-                extra: [
-                    Row {
-                        anchors.fill: parent
-
-                        Repeater {
-                            model: 7
-
-                            Item {
-                                id: day
-
-                                required property int index
-
-                                // Monday first, the way the month is laid out.
-                                readonly property date date: {
-                                    const base = new Date(calendarFace.today)
-                                    const shift = (base.getDay() + 6) % 7
-                                    base.setDate(base.getDate() - shift + day.index)
-                                    return base
-                                }
-
-                                readonly property bool today:
-                                    day.date.getDate() === calendarFace.today.getDate()
-                                    && day.date.getMonth() === calendarFace.today.getMonth()
-
-                                readonly property string key: TasksService.dayKey(day.date)
-                                readonly property int tasks: TasksService.countOn(day.key)
-                                readonly property int pending: TasksService.pendingOn(day.key)
-
-                                width: parent.width / 7
-                                height: parent.height
-
-                                Column {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: Qt.formatDateTime(day.date, "ddd").charAt(0)
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fontSizeLabel
-                                        color: root.ink.muted
-                                    }
-
-                                    Rectangle {
-                                        width: 24
-                                        height: 24
-                                        radius: 12
-                                        color: day.today ? root.ink.accent : "transparent"
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            anchors.verticalCenterOffset: day.tasks > 0 ? -1 : 0
-                                            text: `${day.date.getDate()}`
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fontSizeSmall
-                                            font.weight: day.today ? Font.DemiBold : Font.Normal
-                                            color: day.today ? root.ink.accentText : root.ink.text
-                                        }
-
-                                        // A task due that day: the accent while
-                                        // any is open, muted once done.
-                                        Rectangle {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.bottom: parent.bottom
-                                            anchors.bottomMargin: 2
-                                            visible: day.tasks > 0
-                                            width: 3
-                                            height: 3
-                                            radius: 1.5
-                                            color: day.today ? root.ink.accentText
-                                                : (day.pending > 0 ? root.ink.accent : root.ink.muted)
-                                        }
-                                    }
-                                }
-
-                                HoverHandler {
-                                    enabled: day.tasks > 0
-                                    cursorShape: Qt.PointingHandCursor
-                                }
-
-                                TapHandler {
-                                    enabled: day.tasks > 0
-                                    gesturePolicy: TapHandler.ReleaseWithinBounds
-                                    onTapped: week.picked = day.key
-                                }
-                            }
-                        }
-                    }
-                ]
-            }
-
-            DayTasks {
-                anchors.fill: parent
-                anchors.margins: 18
-                day: week.picked
-                opacity: week.picked !== "" ? 1 : 0
-                visible: opacity > 0
-                ink: ({
-                    text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                    accentText: root.ink.accentText, raised: root.ink.raised,
-                    red: Theme.red, rule: root.ink.dim
-                })
-                onBack: week.picked = ""
-
-                Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-            }
-        }
-    }
-
-    // The 2×2 plus the next three tasks, with checkboxes.
-    Component {
-        id: tasksWide
-
         WidgetFace {
 
             ink: root.ink
-            label: "Tasks"
-            reading: `${TasksService.pending}`
-            note: TasksService.pending === 0
-                ? (TasksService.count === 0 ? "nothing yet" : "all done")
-                : TasksService.summary
-            tint: TasksService.overdue.length > 0 ? Theme.red : root.ink.text
-            extraShare: 0.55
+            id: calendarFace
+
+            readonly property date today: calendarClock.date
+
+            // The same label and reading as the square, so the wide face
+            // adds the week without rearranging anything.
+            label: Qt.formatDateTime(calendarClock.date, "MMMM")
+            reading: `${calendarFace.today.getDate()}`
+            note: Qt.formatDateTime(calendarClock.date, "dddd")
+            extraShare: 0.5
+
+            SystemClock {
+                id: calendarClock
+                precision: SystemClock.Minutes
+            }
 
             Text {
                 anchors.centerIn: parent
-                text: "󰄲"
+                text: "󰃭"
                 font.family: Theme.fontMono
                 font.pixelSize: 30
                 color: root.ink.text
             }
 
             extra: [
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                Row {
+                    anchors.fill: parent
 
                     Repeater {
-                        model: ScriptModel {
-                            values: TasksService.queue.slice(0, 3)
-                            objectProp: "key"
-                        }
+                        model: 7
 
-                        TaskRow {
-                            required property var modelData
+                        Item {
+                            id: day
 
-                            width: parent.width
-                            task: modelData
-                            dated: false
-                            ink: ({
-                                text: root.ink.text, muted: root.ink.muted, accent: root.ink.accent,
-                                accentText: root.ink.accentText, raised: root.ink.raised, red: Theme.red
-                            })
-                            onOpened: {
-                                TasksService.open(modelData.key)
-                                ModuleService.requestPanel("board")
+                            required property int index
+
+                            // Monday first, the way the month is laid out.
+                            readonly property date date: {
+                                const base = new Date(calendarFace.today)
+                                const shift = (base.getDay() + 6) % 7
+                                base.setDate(base.getDate() - shift + day.index)
+                                return base
                             }
+
+                            readonly property bool today:
+                                day.date.getDate() === calendarFace.today.getDate()
+                                && day.date.getMonth() === calendarFace.today.getMonth()
+
+                            width: parent.width / 7
+                            height: parent.height
+
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: Qt.formatDateTime(day.date, "ddd").charAt(0)
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeLabel
+                                    color: root.ink.muted
+                                }
+
+                                Rectangle {
+                                    width: 24
+                                    height: 24
+                                    radius: 12
+                                    color: day.today ? root.ink.accent : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: `${day.date.getDate()}`
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.weight: day.today ? Font.DemiBold : Font.Normal
+                                        color: day.today ? root.ink.accentText : root.ink.text
+                                    }
+
+                                }
+                            }
+
                         }
                     }
                 }
             ]
         }
-    }
-
-    // A note is its text at any size; see `NoteFace`.
-    Component {
-        id: notesWide
-
-        NoteFace { ink: root.ink; row: root.row; family: "4x2" }
     }
 
     // A picture of your own; see `PhotoFace`.

@@ -84,8 +84,6 @@ Singleton {
     readonly property alias recorderAudio: config.recorderAudio
     readonly property alias captureShape: config.captureShape
     readonly property alias captureKind: config.captureKind
-    readonly property alias notesHandwriting: config.notesHandwriting
-    readonly property alias deckOnEmpty: config.deckOnEmpty
     readonly property alias spectrumOnEmpty: config.spectrumOnEmpty
     readonly property alias workspaceCount: config.workspaceCount
     readonly property alias workspaceMax: config.workspaceMax
@@ -625,12 +623,6 @@ Singleton {
         property string captureShape: "region"
         property string captureKind: "photo"
 
-        // Note bodies in the handwriting font instead of the UI font.
-        property bool notesHandwriting: true
-
-        // Show edge note decks only on empty workspaces.
-        property bool deckOnEmpty: false
-
         // Show the spectrum only on empty workspaces.
         property bool spectrumOnEmpty: false
 
@@ -714,18 +706,8 @@ Singleton {
         //            desktop's
         //   style    how its capsule is drawn; absent means the desktop's
         //   opacity  how solid it is; absent means the desktop's
-        //   note     for a notes widget, which note; absent means the
-        //            front of the deck
-        //
-        // Or a deck of notes on a screen edge:
-        //
-        //   key      "notes-2"
-        //   id       "notes"
-        //   screen   as above
-        //   edge     "left", "right" or "bottom"
-        //   notes    the note keys on it, in order along the edge
-        //   along    where on the edge, 0 to 1 from its first corner
-        //   takesNew true on the one deck new notes land on
+        //   edge     for a spectrum along the screen's left, right or bottom
+        //            edge, in place of a grid position
         property var desktopWidgets: []
 
         // The theme for widgets without their own, from

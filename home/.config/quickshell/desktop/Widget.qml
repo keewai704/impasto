@@ -71,7 +71,7 @@ Item {
     readonly property color rim: Qt.rgba(root.ink.border.r, root.ink.border.g, root.ink.border.b,
                                          root.ink.border.a * Math.min(1, root.solidity * 5))
 
-    // Notes, photos and the spectrum have no capsule and draw on the
+    // Photos and the spectrum have no capsule and draw on the
     // wallpaper with a shadow.
     readonly property bool onPicture: DesktopService.bare(root.row)
 
@@ -206,7 +206,7 @@ Item {
     // item's source. Not the spectrum, which is drawn as it is on an edge,
     // and whose layer would be drawn again on every one of cava's frames.
     readonly property bool sticker: DesktopService.themeOf(root.row) === "sticker"
-        && root.moduleId !== "notes" && root.moduleId !== "spectrum"
+        && root.moduleId !== "spectrum"
 
     // The layer holds the ground and the face and nothing else, grown by
     // `reach` on every side: a layer is clipped to its item, and the arranging
@@ -288,8 +288,8 @@ Item {
         border.width: root.held || root.selected ? 2 : 1
     }
 
-    // At rest the right button opens the widget menu (Edit, Remove, and Open
-    // for a note) at the pointer; the background draws it.
+    // At rest the right button opens the widget menu (Edit and Remove)
+    // at the pointer; the background draws it.
     TapHandler {
         enabled: !root.editing
         acceptedButtons: Qt.RightButton
@@ -334,11 +334,9 @@ Item {
             }
             DesktopService.dragging = ""
             DesktopService.landing = null
-            DeckService.receiving = ""
-            // Dropped on the tray, it is removed; a note dropped on a screen
-            // edge joins that edge's deck, and a spectrum becomes the bars
-            // along it; otherwise it goes to the cell under the pointer. `place` falls back to the nearest free cell or the
-            // original one, and the binding above moves it there.
+            DesktopService.receivingEdge = ""
+            // Dropped on the tray, it is removed; a spectrum on a screen edge
+            // becomes the bars along it. Otherwise use the nearest free cell.
             const pointer = root.board.mapFromItem(
                 null, drag.centroid.scenePosition.x, drag.centroid.scenePosition.y)
             if (DesktopService.overTray(root.screenName, pointer.x, pointer.y)) {
@@ -350,24 +348,18 @@ Item {
                 DesktopService.spectrumToEdge(root.key, root.screenName, edge)
                 return
             }
-            if (edge !== "") {
-                DesktopService.noteToEdge(root.key, root.screenName, edge)
-                return
-            }
             DesktopService.place(root.key, root.screenName,
                 DesktopService.cellX(root.screenName, root.x - DesktopService.insets.left),
                 DesktopService.cellY(root.screenName, root.y))
         }
     }
 
-    // A note held against a screen edge is headed for that edge's deck, and
-    // a spectrum for the bars along it when it has none; the deck's surface
-    // highlights it.
+    // A spectrum can move to an edge that has no spectrum yet.
     function edgeUnder(x: real, y: real): string {
-        if (root.moduleId !== "notes" && root.moduleId !== "spectrum")
+        if (root.moduleId !== "spectrum")
             return ""
         const edge = DesktopService.edgeAt(x, y, root.board.width, root.board.height)
-        if (root.moduleId === "spectrum" && !DesktopService.spectrumTakes(root.screenName, edge))
+        if (!DesktopService.spectrumTakes(root.screenName, edge))
             return ""
         return edge
     }
@@ -381,17 +373,17 @@ Item {
             null, drag.centroid.scenePosition.x, drag.centroid.scenePosition.y)
         if (DesktopService.overTray(root.screenName, pointer.x, pointer.y)) {
             DesktopService.landing = null
-            DeckService.receiving = ""
+            DesktopService.receivingEdge = ""
             return
         }
         const edge = root.edgeUnder(pointer.x, pointer.y)
         if (edge !== "") {
             DesktopService.landing = null
-            DeckService.receivingScreen = root.screenName
-            DeckService.receiving = edge
+            DesktopService.receivingScreen = root.screenName
+            DesktopService.receivingEdge = edge
             return
         }
-        DeckService.receiving = ""
+        DesktopService.receivingEdge = ""
         const spot = DesktopService.nearestFree(root.screenName,
             DesktopService.cellX(root.screenName, root.x - DesktopService.insets.left),
             DesktopService.cellY(root.screenName, root.y), root.family, root.key)

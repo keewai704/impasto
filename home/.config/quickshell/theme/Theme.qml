@@ -159,7 +159,7 @@ QtObject {
     readonly property color scrimText: "#ffffff"
     readonly property color hairline: "#20ffffff"
 
-    // Sticky-note paper: a palette tint washed towards white, with ink that
+    // Paper widgets: a palette tint washed towards white, with ink that
     // stays dark in every palette.
     readonly property color paperWash: "#c4ffffff"
     readonly property color paperInk: "#1c1c1e"
@@ -414,10 +414,6 @@ QtObject {
     // Script face for the shell's own name, shipped with it.
     readonly property string fontSignature:
         root.fontOf(`Grape Nuts, Georgia, ${root.fontFamily}`)
-
-    // Note bodies: handwriting unless switched off.
-    readonly property string fontHand: SettingsService.notesHandwriting
-        ? root.fontSignature : root.fontFamily
 
     readonly property int fontSizeLabel: 10
     readonly property int fontSizeSmall: 11

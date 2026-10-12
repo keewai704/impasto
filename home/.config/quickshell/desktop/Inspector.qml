@@ -32,10 +32,6 @@ Item {
     readonly property var box: DesktopService.geometry(
         root.row ?? ({}), root.board.width, root.board.height)
 
-    // A deck of notes on an edge rather than a widget on a cell: no shape, and
-    // a list of notes.
-    readonly property bool deck: DesktopService.isDeck(root.row)
-    readonly property bool onNote: root.moduleId === "notes"
     readonly property bool onPhoto: root.moduleId === "photo"
 
     // The spectrum is its bars wherever it is: no face and no capsule, a look
@@ -45,9 +41,9 @@ Item {
     readonly property bool strip: DesktopService.isSpectrum(root.row)
     readonly property var looks: DesktopService.spectrumOf(root.onSpectrum ? root.row : null)
 
-    // Notes, photos and the spectrum have no capsule to style and no capsule
+    // Photos and the spectrum have no capsule to style and no capsule
     // opacity to set; neither has a sticker (`DesktopService.bare`).
-    readonly property bool styled: !root.onNote && !root.onPhoto && !root.onSpectrum
+    readonly property bool styled: !root.onPhoto && !root.onSpectrum
 
     // Only a print has a chin to write in.
     readonly property bool captioned: root.onPhoto
@@ -86,7 +82,7 @@ Item {
             root.box.x - root.gap - card.width >= Theme.desktopGutter
 
         // Anything on the bottom edge has no side: the card goes above.
-        readonly property bool above: (root.deck || root.strip) && root.row.edge === "bottom"
+        readonly property bool above: root.strip && root.row.edge === "bottom"
 
         x: card.above ? Math.max(Theme.desktopGutter, root.box.x + Theme.desktopGutter)
             : card.rightFits ? root.box.x + root.box.width + root.gap
@@ -134,9 +130,7 @@ Item {
                 Text {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.entry
-                        ? (root.deck ? `${Tr.t(root.entry.name)} · ${Tr.t("Notes on the edge")}` : Tr.t(root.entry.name))
-                        : ""
+                    text: root.entry ? Tr.t(root.entry.name) : ""
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeMedium
                     font.weight: Font.DemiBold
@@ -160,7 +154,7 @@ Item {
             // The same choice as dragging the corner handle.
 
             Text {
-                visible: !root.deck && !root.strip
+                visible: !root.strip
                 text: Tr.t("Shape")
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeLabel
@@ -169,11 +163,11 @@ Item {
             }
 
             Row {
-                visible: !root.deck && !root.strip
+                visible: !root.strip
                 spacing: 8
 
                 Repeater {
-                    model: root.deck || root.strip ? []
+                    model: root.strip ? []
                         : DesktopService.familiesFor(root.moduleId, DesktopService.themeOf(root.row))
 
                     Rectangle {
@@ -212,13 +206,10 @@ Item {
 
             // ── WHERE ───────────────────────────────────────────────────────
             //
-            // For a note: a grid cell or one of the three edges. Picking an
-            // edge moves the note to that edge's deck; for a deck, it moves the
-            // whole deck. The spectrum goes the same way, to an edge without
-            // one.
+            // The spectrum can sit on the grid or an empty screen edge.
 
             Text {
-                visible: root.onNote || root.onSpectrum
+                visible: root.onSpectrum
                 text: Tr.t("Where")
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeLabel
@@ -227,24 +218,23 @@ Item {
             }
 
             Row {
-                visible: root.onNote || root.onSpectrum
+                visible: root.onSpectrum
                 spacing: 8
 
                 Repeater {
-                    model: (root.onNote || root.onSpectrum ? [
-                        { id: "grid", label: Tr.t("Grid"), icon: "󰕰" }
-                    ] : []).concat(root.onNote || root.onSpectrum ? [
+                    model: root.onSpectrum ? [
+                        { id: "grid", label: Tr.t("Grid"), icon: "󰕰" },
                         { id: "left", label: Tr.t("Left"), icon: "󰞕" },
                         { id: "right", label: Tr.t("Right"), icon: "󰞘" },
                         { id: "bottom", label: Tr.t("Bottom"), icon: "󰞖" }
-                    ] : [])
+                    ] : []
 
                     Rectangle {
                         id: whereTile
 
                         required property var modelData
 
-                        readonly property bool current: root.deck || root.strip
+                        readonly property bool current: root.strip
                             ? root.row.edge === whereTile.modelData.id
                             : whereTile.modelData.id === "grid"
 
@@ -293,22 +283,12 @@ Item {
                                 if (whereTile.current || whereTile.taken)
                                     return
                                 const name = DesktopService.nameOf(root.row)
-                                if (root.onSpectrum) {
-                                    if (where === "grid")
-                                        DesktopService.spectrumToGrid(root.key, name)
-                                    else if (root.strip)
-                                        DesktopService.setSpectrumEdge(root.key, name, where)
-                                    else
-                                        DesktopService.spectrumToEdge(root.key, name, where)
-                                    return
-                                }
-                                if (root.deck) {
-                                    if (where === "grid")
-                                        return
-                                    DesktopService.setDeckEdge(root.key, name, where)
-                                    return
-                                }
-                                DesktopService.noteToEdge(root.key, name, where)
+                                if (where === "grid")
+                                    DesktopService.spectrumToGrid(root.key, name)
+                                else if (root.strip)
+                                    DesktopService.setSpectrumEdge(root.key, name, where)
+                                else
+                                    DesktopService.spectrumToEdge(root.key, name, where)
                             }
                         }
                     }
@@ -499,275 +479,6 @@ Item {
                 onMoved: value => DesktopService.setSpectrum(root.key, { opacity: value })
             }
 
-            // ── ALIGNMENT ───────────────────────────────────────────────────
-            //
-            // For a deck: the start, centre or end of its edge. Finer placement
-            // is the grip before the first tab.
-
-            Text {
-                visible: root.deck
-                text: Tr.t("Along the edge")
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeLabel
-                font.weight: Font.DemiBold
-                color: Theme.textMuted
-            }
-
-            Row {
-                visible: root.deck
-                spacing: 8
-
-                Repeater {
-                    model: root.deck ? [
-                        { value: 0, label: Tr.t("Start") },
-                        { value: 0.5, label: Tr.t("Middle") },
-                        { value: 1, label: Tr.t("End") }
-                    ] : []
-
-                    Rectangle {
-                        id: alongTile
-
-                        required property var modelData
-
-                        readonly property bool current: root.deck
-                            && Math.abs(DesktopService.alongOf(root.row) - alongTile.modelData.value) < 0.01
-
-                        width: 64
-                        height: 30
-                        radius: Theme.radiusSmall
-                        color: alongTile.current ? Theme.surfaceHoverIn(QsWindow.window) : "transparent"
-                        border.color: alongTile.current ? Theme.accent : Theme.hairline
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: alongTile.modelData.label
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeLabel
-                            color: alongTile.current ? Theme.text : Theme.textMuted
-                        }
-
-                        HoverHandler { cursorShape: Qt.PointingHandCursor }
-
-                        TapHandler {
-                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                            onTapped: DesktopService.setDeckAlong(root.key, alongTile.modelData.value)
-                        }
-                    }
-                }
-            }
-
-            // ── NOTES ───────────────────────────────────────────────────────
-            //
-            // For a deck: every note, ticked on or off this edge, in the order
-            // ticked. Ticking a note here moves it from wherever it was.
-
-            Item {
-                visible: root.deck
-                width: parent.width
-                height: 28
-
-                Heading {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Tr.t("New notes land here")
-                }
-
-                ToggleSwitch {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: root.deck && root.row.takesNew === true
-                    onToggled: checked => DesktopService.setTakesNew(root.key, checked)
-                }
-            }
-
-            Text {
-                visible: root.deck
-                text: Tr.t("Which notes")
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeLabel
-                font.weight: Font.DemiBold
-                color: Theme.textMuted
-            }
-
-            Column {
-                visible: root.deck
-                width: parent.width
-                spacing: 4
-
-                Repeater {
-                    model: ScriptModel {
-                        values: root.deck ? NotesService.live : []
-                        objectProp: "key"
-                    }
-
-                    Rectangle {
-                        id: tickRow
-
-                        required property var modelData
-
-                        readonly property bool on: root.deck
-                            && DesktopService.deckNotes(root.row).indexOf(tickRow.modelData.key) >= 0
-                        readonly property string elsewhere: {
-                            const place = DesktopService.placementOf(tickRow.modelData.key)
-                            return tickRow.on || place === "" ? "" : place
-                        }
-
-                        width: parent.width
-                        height: 26
-                        radius: Theme.radiusSmall
-                        color: tickHover.hovered ? Theme.surfaceHoverIn(QsWindow.window) : "transparent"
-
-                        Row {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 6
-                            anchors.rightMargin: 6
-                            spacing: 8
-
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 14
-                                height: 14
-                                radius: 4
-                                color: tickRow.on ? Theme.accent : "transparent"
-                                border.color: tickRow.on ? Theme.accent : Theme.textMuted
-                                border.width: 1.5
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    visible: tickRow.on
-                                    text: "󰄬"
-                                    font.family: Theme.fontMono
-                                    font.pixelSize: 9
-                                    color: Theme.accentText
-                                }
-                            }
-
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 8
-                                height: 8
-                                radius: 4
-                                color: NotesService.tintColor(tickRow.modelData.tint)
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 30 - (elsewhereMark.visible ? elsewhereMark.width + 8 : 0)
-                                text: NotesService.titleOf(tickRow.modelData)
-                                elide: Text.ElideRight
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeLabel
-                                color: tickRow.on ? Theme.text : Theme.textMuted
-                            }
-
-                            Text {
-                                id: elsewhereMark
-
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: tickRow.elsewhere !== ""
-                                text: tickRow.elsewhere === "grid" ? "󰕰" : "󰞘"
-                                font.family: Theme.fontMono
-                                font.pixelSize: 10
-                                color: Theme.textMuted
-                            }
-                        }
-
-                        HoverHandler { id: tickHover; cursorShape: Qt.PointingHandCursor }
-
-                        TapHandler {
-                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                            onTapped: DesktopService.toggleDeckNote(root.key, tickRow.modelData.key)
-                        }
-                    }
-                }
-            }
-
-            // ── NOTE ────────────────────────────────────────────────────────
-            //
-            // For a notes widget on a cell: the front of the deck (the default
-            // when the row names none), then every note.
-
-            Text {
-                visible: root.onNote && !root.deck
-                text: Tr.t("Which note")
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeLabel
-                font.weight: Font.DemiBold
-                color: Theme.textMuted
-            }
-
-            Flow {
-                visible: root.onNote && !root.deck
-                width: parent.width
-                spacing: 6
-
-                Repeater {
-                    model: root.onNote && !root.deck
-                        ? [{ key: "", text: Tr.t("The newest"), tint: "" }].concat(NotesService.live)
-                        : []
-
-                    Rectangle {
-                        id: noteTile
-
-                        required property var modelData
-
-                        readonly property string noteKey: noteTile.modelData.key
-                        readonly property bool current:
-                            (root.row && root.row.note ? root.row.note : "") === noteTile.noteKey
-                        readonly property string line: noteTile.noteKey === ""
-                            ? noteTile.modelData.text
-                            : NotesService.titleOf(noteTile.modelData)
-
-                        width: Math.min(tileLine.implicitWidth + 24 + (noteTile.noteKey === "" ? 0 : 12), 140)
-                        height: 26
-                        radius: Theme.radiusPill
-                        color: noteTile.current ? Theme.surfaceHoverIn(QsWindow.window) : "transparent"
-                        border.color: noteTile.current ? Theme.accent : Theme.hairline
-                        border.width: 1
-
-                        Row {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 6
-
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: noteTile.noteKey !== ""
-                                width: 7
-                                height: 7
-                                radius: 3.5
-                                color: NotesService.tintColor(noteTile.modelData.tint)
-                            }
-
-                            Text {
-                                id: tileLine
-
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.min(implicitWidth, noteTile.width - 24 - (noteTile.noteKey === "" ? 0 : 12))
-                                text: noteTile.line
-                                elide: Text.ElideRight
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeLabel
-                                color: noteTile.current ? Theme.text : Theme.textMuted
-                            }
-                        }
-
-                        HoverHandler { cursorShape: Qt.PointingHandCursor }
-
-                        TapHandler {
-                            gesturePolicy: TapHandler.ReleaseWithinBounds
-                            onTapped: DesktopService.update(root.key, { note: noteTile.noteKey || null })
-                        }
-                    }
-                }
-            }
-
             // ── PICTURE ─────────────────────────────────────────────────────
             //
             // For a photo: the picture, the picker (`Picker.qml`, in this
@@ -895,7 +606,7 @@ Item {
             // as a live clock face.
 
             Text {
-                visible: root.moduleId !== "notes" && root.moduleId !== "lyrics" && !root.onSpectrum
+                visible: root.moduleId !== "lyrics" && !root.onSpectrum
                 text: Tr.t("Face")
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeLabel
@@ -904,7 +615,7 @@ Item {
             }
 
             Row {
-                visible: root.moduleId !== "notes" && root.moduleId !== "lyrics" && !root.onSpectrum
+                visible: root.moduleId !== "lyrics" && !root.onSpectrum
                 spacing: 8
 
                 Repeater {

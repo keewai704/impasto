@@ -57,13 +57,13 @@ Item {
           blurb: Tr.t("What sits on the wallpaper, under the windows."),
           tabs: [{ id: "modules", label: Tr.t("Module settings") },
                  { id: "widgets", label: Tr.t("The widgets") }],
-          keywords: "widgets desktop wallpaper widget place drag size shape capsule ground glass classic blur palette ink tray edit arrange clock calendar notes note sticky theme analogue modern opacity weather location place city github contributions username handwriting edges deck style spectrum cava visualiser visualizer bars audio music lyrics song",
+          keywords: "widgets desktop wallpaper widget place drag size shape capsule ground glass classic blur palette ink tray edit arrange clock calendar theme analogue modern opacity weather location place city github contributions username edges style spectrum cava visualiser visualizer bars audio music lyrics song",
           page: widgetsPage },
 
         { id: "controls", category: "shell", icon: "󰕰", label: Tr.t("Control Centre"),
           blurb: Tr.t("What the island opens onto when you click it."),
           tabs: [],
-          keywords: "controls control centre center panel doors buttons row notes board tasks kanban stats blocks grid toggles tiles arrange edit tray wifi bluetooth airplane microphone focus",
+          keywords: "controls control centre center panel doors buttons row stats blocks grid toggles tiles arrange edit tray wifi bluetooth airplane microphone focus",
           page: controlsPage },
 
         { id: "launcher", category: "shell", icon: "󰍉", label: Tr.t("Launcher"),
@@ -71,7 +71,7 @@ Item {
           tabs: [{ id: "results", label: Tr.t("Results") },
                  { id: "sigils", label: Tr.t("Sigils") },
                  { id: "clipboard", label: Tr.t("Clipboard") }],
-          keywords: "launcher search apps results calculate run window timer note task board prefix sigil order recent frequency favourite favorite pinned kept clipboard history copy paste images wipe lock",
+          keywords: "launcher search apps results calculate run window timer prefix sigil order recent frequency favourite favorite pinned kept clipboard history copy paste images wipe lock",
           page: launcherPage },
 
         { id: "appearance", category: "desk", icon: "󰏘", label: Tr.t("Appearance"),

@@ -74,7 +74,7 @@ Item {
     //
     // A click selects it; a press that moves carries it. The strip stays where
     // it is while its card follows the pointer; the edge under the pointer
-    // lights (`DeckService.receiving`) unless it already has a spectrum, and
+    // lights (`DesktopService.receivingEdge`) unless it already has a spectrum, and
     // over the grid the square it would take is marked.
 
     TapHandler {
@@ -98,11 +98,11 @@ Item {
                 return
             }
             const pointer = root.pointer()
-            const edge = DeckService.receiving
+            const edge = DesktopService.receivingEdge
             const spot = DesktopService.landing
             DesktopService.dragging = ""
             DesktopService.landing = null
-            DeckService.receiving = ""
+            DesktopService.receivingEdge = ""
             if (DesktopService.overTray(root.screenName, pointer.x, pointer.y))
                 DesktopService.remove(root.key)
             else if (edge !== "")
@@ -135,8 +135,8 @@ Item {
         const name = root.screenName
         const over = DesktopService.overTray(name, pointer.x, pointer.y)
         const edge = over ? "" : DesktopService.edgeAt(pointer.x, pointer.y, root.board.width, root.board.height)
-        DeckService.receivingScreen = name
-        DeckService.receiving = DesktopService.spectrumTakes(name, edge) ? edge : ""
+        DesktopService.receivingScreen = name
+        DesktopService.receivingEdge = DesktopService.spectrumTakes(name, edge) ? edge : ""
         if (over || edge !== "") {
             DesktopService.landing = null
             return

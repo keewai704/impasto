@@ -18,7 +18,7 @@ import "../components"
 // smallest family it offers, which is the face it lands with. Drag one onto
 // the grid, or click it to place it on the first free cell, and change its
 // shape there; drop a widget on the card to remove it. Every module is offered
-// regardless of its current state. Notes and the spectrum also land on an
+// regardless of its current state. The spectrum also lands on an
 // edge when let go against one.
 //
 // The ghost (the face at full size while dragged) lives on the board rather
@@ -154,15 +154,13 @@ EditTray {
                     return
                 }
                 const spot = DesktopService.landing
-                const edge = DeckService.receiving
-                const onScreen = DeckService.receivingScreen
+                const edge = DesktopService.receivingEdge
+                const onScreen = DesktopService.receivingScreen
                 const moduleId = root.pulling
                 root.pulling = ""
                 DesktopService.landing = null
-                DeckService.receiving = ""
-                if (edge !== "" && moduleId === "notes")
-                    DesktopService.addDeck(onScreen, edge)
-                else if (edge !== "" && moduleId === "spectrum")
+                DesktopService.receivingEdge = ""
+                if (edge !== "" && moduleId === "spectrum")
                     DesktopService.addSpectrum(onScreen, edge)
                 else if (spot)
                     DesktopService.add(moduleId, spot.screen, spot.col, spot.row)
@@ -188,16 +186,15 @@ EditTray {
         const name = root.screenName
         if (DesktopService.overTray(name, pointer.x, pointer.y)) {
             DesktopService.landing = null
-            DeckService.receiving = ""
+            DesktopService.receivingEdge = ""
             return
         }
-        // A notes piece against an edge is a deck there, and a spectrum the
-        // bars along it if it has none yet; anywhere else, a square.
-        const edged = root.pulling === "notes" || root.pulling === "spectrum"
+        // A spectrum can land on an empty edge or on the grid.
+        const edged = root.pulling === "spectrum"
         const edge = edged
             ? DesktopService.edgeAt(pointer.x, pointer.y, root.board.width, root.board.height) : ""
-        DeckService.receivingScreen = name
-        DeckService.receiving = root.pulling !== "spectrum" || DesktopService.spectrumTakes(name, edge)
+        DesktopService.receivingScreen = name
+        DesktopService.receivingEdge = DesktopService.spectrumTakes(name, edge)
             ? edge : ""
         if (edge !== "") {
             DesktopService.landing = null

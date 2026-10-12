@@ -38,7 +38,6 @@ Item {
         timer: timerFace,
         volume: volumeFace,
         brightness: brightnessFace,
-        tasks: tasksFace,
         updates: updatesFace,
         network: networkFace,
         bluetooth: bluetoothFace,
@@ -62,7 +61,6 @@ Item {
     Component { id: timerFace;      TimerFace      { family: root.family; ink: root.ink } }
     Component { id: volumeFace;     VolumeFace     { family: root.family; ink: root.ink } }
     Component { id: brightnessFace; BrightnessFace { family: root.family; ink: root.ink } }
-    Component { id: tasksFace;      TasksFace      { family: root.family; ink: root.ink } }
     Component { id: updatesFace;    UpdatesFace    { family: root.family; ink: root.ink } }
     Component { id: networkFace;    NetworkFace    { family: root.family; ink: root.ink } }
     Component { id: bluetoothFace;  BluetoothFace  { family: root.family; ink: root.ink } }

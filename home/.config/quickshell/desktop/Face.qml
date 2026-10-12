@@ -17,7 +17,7 @@ import "./faces/sticker"
 // Picks the face for a module, a family (size) and a theme. Modern has one
 // registry per family, falling back within that registry for modules without a
 // row; Analogue and Sticker each have a single registry whose faces lay
-// themselves out at any size. Notes always use NoteFace, the spectrum is its
+// themselves out at any size. The spectrum is its
 // bars and the lyrics are LyricsFace in every theme. Faces read their colours
 // from the widget's resolved `ink`.
 Item {
@@ -28,12 +28,11 @@ Item {
     property string theme: DesktopService.themeOf(null)
     property var ink: DesktopService.inkFor(null)
 
-    // The desktop row, for faces that draw something the row names (a note,
-    // a picture). Null for tray tiles, which show the front of the deck or
-    // an empty frame.
+    // The desktop row, including the picture used by a photo face.
+    // Tray tiles have no row and show an empty frame.
     property var row: null
 
-    readonly property bool shared: root.moduleId === "notes" || root.moduleId === "spectrum"
+    readonly property bool shared: root.moduleId === "spectrum"
     readonly property bool analogue: root.theme === "analogue" && !root.shared
     readonly property bool sticker: root.theme === "sticker" && !root.shared
 

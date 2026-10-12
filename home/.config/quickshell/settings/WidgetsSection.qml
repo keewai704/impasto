@@ -74,34 +74,6 @@ SettingsSection {
         }
 
         SettingGroup {
-            title: Tr.t("Notes")
-            note: Tr.t("A note on the wallpaper is written the same way as one in the panel.")
-            hint: Tr.t("The notes stuck on the screen's edges leave when a window opens on the workspace and come back when the last one closes. Off, they stay over the windows.")
-
-            SettingRow {
-                label: Tr.t("Handwriting")
-                reading: SettingsService.notesHandwriting
-                    ? Tr.t("The signature's script") : Tr.t("The interface face")
-
-                ToggleSwitch {
-                    checked: SettingsService.notesHandwriting
-                    onToggled: checked => SettingsService.set("notesHandwriting", checked)
-                }
-            }
-
-            SettingRow {
-                label: Tr.t("Edges only on an empty workspace")
-                reading: SettingsService.deckOnEmpty
-                    ? Tr.t("Gone while a window is open") : Tr.t("Over the windows")
-
-                ToggleSwitch {
-                    checked: SettingsService.deckOnEmpty
-                    onToggled: checked => SettingsService.set("deckOnEmpty", checked)
-                }
-            }
-        }
-
-        SettingGroup {
             title: Tr.t("Spectrum")
             note: Tr.t("Sound bars from whatever is playing, on the grid or along an edge.")
             hint: Tr.t("The bars leave when a window opens on the workspace and come back when the last one closes, and stop listening meanwhile. Off, they stay under the windows.")

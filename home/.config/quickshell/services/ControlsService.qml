@@ -45,10 +45,6 @@ Singleton {
           detail: "Processor, memory, disks, the network", panel: "stats" },
         { id: "settings",   icon: "󰒓", label: "Settings",
           detail: "The whole desk, in a window",           panel: "" },
-        { id: "notes",      icon: "󰎞", label: "Notes",
-          detail: "The deck of sticky notes",              panel: "notes" },
-        { id: "board",      icon: "󰄲", label: "Task board",
-          detail: "To do, doing, done",                    panel: "board" },
         { id: "overview",   icon: "󰕰", label: "Workspace overview",
           detail: "Every workspace side by side",          panel: "overview" },
         { id: "launcher",   icon: "󰍉", label: "Launcher",
@@ -63,7 +59,7 @@ Singleton {
           detail: "Updates, what is installed, the AUR",   panel: "packages" }
     ]
 
-    readonly property var defaultButtons: ["stats", "settings", "notes", "board"]
+    readonly property var defaultButtons: ["stats", "settings"]
 
     // The grid when nothing is chosen, which the default layout fills.
     readonly property int defaultColumns: 6
@@ -471,8 +467,6 @@ Singleton {
         { id: "notifications", name: "Notifications", icon: "󰂚", sizes: ["3x2", "3x3", "2x4", "3x4", "2x6", "2x8", "3x8"] },
         { id: "impasto",       name: "impasto",       icon: "󰏘", sizes: ["1x2", "2x2", "2x4"] },
         { id: "clock",         name: "Clock",         icon: "󰥔", sizes: ["1x2", "2x2", "2x4"] },
-        { id: "notes",         name: "Notes",         icon: "󰎞", sizes: ["1x2", "2x2", "2x4"] },
-        { id: "tasks",         name: "Tasks",         icon: "󰄲", sizes: ["1x2", "2x2", "2x3", "2x4"] },
         { id: "session",       name: "Session",       icon: "󰐥", sizes: ["1x1", "2x1", "3x1", "1x2", "2x2", "4x1"] },
         { id: "shortcuts",     name: "Shortcuts",     icon: "󰕰", sizes: ["1x1", "2x1", "3x1", "1x2", "2x2", "4x1", "6x1"] }
     ]

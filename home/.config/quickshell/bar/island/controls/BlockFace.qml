@@ -45,8 +45,6 @@ Item {
         notifications: notificationsBlock,
         impasto: impastoBlock,
         clock: clockBlock,
-        notes: notesBlock,
-        tasks: tasksBlock,
         session: sessionBlock,
         shortcuts: shortcutsBlock
     })
@@ -147,7 +145,7 @@ Item {
 
     Component {
         id: calendarBlock
-        CalendarCard { onPanelRequested: panel => root.panelRequested(panel) }
+        CalendarCard {}
     }
 
     Component {
@@ -171,39 +169,4 @@ Item {
         }
     }
 
-    // A note with no card around it. Clicking opens it for editing.
-    Component {
-        id: notesBlock
-        Item {
-            readonly property var note: NotesService.noteFor(null)
-
-            Sticky {
-                anchors.fill: parent
-                note: parent.note
-                placeholder: "No notes yet"
-                padding: root.shape.cols === 1 ? 12 : 14
-                titleSize: root.shape.rows >= 4 ? Theme.fontSizeRegular : Theme.fontSizeSmall
-                bodySize: root.shape.rows >= 4 ? 20 : 16
-            }
-
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
-
-            TapHandler {
-                gesturePolicy: TapHandler.ReleaseWithinBounds
-                onTapped: {
-                    NotesService.open(parent.note ? parent.note.key : "")
-                    root.panelRequested("notes")
-                }
-            }
-        }
-    }
-
-    Component {
-        id: tasksBlock
-        TasksBlock {
-            cols: root.shape.cols
-            rows: root.shape.rows
-            onPanelRequested: panel => root.panelRequested(panel)
-        }
-    }
 }
