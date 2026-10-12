@@ -29,7 +29,7 @@ Scope {
     // Outside the handlers: a handler's properties are offered over IPC, which
     // carries no lists.
     readonly property var taskStates: ["todo", "doing", "done"]
-    readonly property var panelNames: ["launcher", "controls", "overview", "appearance", "palette",
+    readonly property var panelNames: ["launcher", "controls", "overview", "appearance", "palette", "effects",
         "stats", "session", "notes", "board", "keys", "packages",
         "machines", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight"]
 
@@ -509,6 +509,20 @@ Scope {
         function list(): string {
             return root.ok({ current: WallpaperService.chosen,
                              wallpapers: WallpaperService.wallpapers.concat(WallpaperService.animated) })
+        }
+
+        function effect(id: string): string {
+            if (!WallpaperService.effects.some(effect => effect.id === id))
+                return root.fail("unknown wallpaper effect (wallpaper effects)")
+            if (!WallpaperService.applyEffect(id))
+                return root.fail("wallpaper is busy")
+            return root.ok({ effect: id })
+        }
+
+        function effects(): string {
+            return root.ok({ current: WallpaperService.currentEffect,
+                             busy: WallpaperService.processingEffect,
+                             effects: WallpaperService.effects })
         }
 
         function random(): string {

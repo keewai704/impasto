@@ -16,9 +16,9 @@ import "../../theme"
 import "../../services"
 import "../../components"
 
-// The animated wallpapers, the wallpapers and the palettes, each as a strip
+// Animated wallpapers, wallpapers, palettes and effects, each as a strip
 // (`Carousel`): the tile in the middle large, its neighbours stepping away.
-// Left and Right slide, Enter applies. Three pages top to bottom: Up and Down
+// Left and Right slide, Enter applies. Four pages top to bottom: Up and Down
 // move between them, the second shortcut opens on the palettes, and the
 // chevrons in the footer do it with the pointer.
 //
@@ -30,17 +30,17 @@ FocusScope {
     signal closed()
     signal panelRequested(string panel)
 
-    // `wallpaper` or `palette`: the name the panel was opened under, so the
-    // shortcut slides a panel that is already open. `shown` is the page on
+    // The shortcut's page slides a panel that is already open. `shown` is
     // screen, which can also be `animated`, a page with no name of its own.
     property string page: "wallpaper"
     property string shown: root.page
     onPageChanged: root.shown = root.page
 
-    readonly property var pages: ["animated", "wallpaper", "palette"]
+    readonly property var pages: ["animated", "wallpaper", "palette", "effects"]
     readonly property int shownIndex: root.pages.indexOf(root.shown)
     readonly property bool onPalette: root.shown === "palette"
     readonly property bool onAnimated: root.shown === "animated"
+    readonly property bool onEffects: root.shown === "effects"
 
     readonly property int gap: 12
     readonly property int tileWidth: 160
@@ -50,11 +50,12 @@ FocusScope {
     readonly property int loadReach: 8
 
     readonly property Carousel strip:
-        root.onPalette ? palettes : root.onAnimated ? animations : wallpapers
+        root.onEffects ? effects : root.onPalette ? palettes : root.onAnimated ? animations : wallpapers
 
     readonly property var centredWallpaper: WallpaperService.wallpapers[wallpapers.current] ?? null
     readonly property var centredAnimation: WallpaperService.animated[animations.current] ?? null
     readonly property var centredPalette: ThemeService.availableThemes[palettes.current] ?? null
+    readonly property var centredEffect: WallpaperService.effects[effects.current] ?? null
 
     Component.onCompleted: {
         WallpaperService.scan()
@@ -70,11 +71,15 @@ FocusScope {
         entry => entry.path === WallpaperService.chosen))
     readonly property int activePalette: Math.max(0, ThemeService.availableThemes.findIndex(
         entry => entry.id === ThemeService.activeId))
+    readonly property int appliedEffect: Math.max(0, WallpaperService.effects.findIndex(
+        entry => entry.id === WallpaperService.currentEffect))
+    onAppliedEffectChanged: effects.goTo(root.appliedEffect)
 
     function settle(): void {
         wallpapers.goTo(root.appliedWallpaper)
         animations.goTo(root.appliedAnimation)
         palettes.goTo(root.activePalette)
+        effects.goTo(root.appliedEffect)
     }
 
     Connections {
@@ -82,10 +87,14 @@ FocusScope {
         function onWallpapersChanged(): void { root.settle() }
         function onAnimatedChanged(): void { root.settle() }
         function onChosenChanged(): void { root.settle() }
+        function onEffectsChanged(): void { root.settle() }
     }
 
     function apply(): void {
-        if (root.onPalette) {
+        if (root.onEffects) {
+            if (root.centredEffect)
+                WallpaperService.applyEffect(root.centredEffect.id)
+        } else if (root.onPalette) {
             if (root.centredPalette)
                 ThemeService.setTheme(root.centredPalette.id)
         } else if (root.onAnimated) {
@@ -96,7 +105,7 @@ FocusScope {
         }
     }
 
-    // The page `delta` away, up or down. The two named pages go through the
+    // The page `delta` away, up or down. The named pages go through the
     // island, so its name follows; the animated one is this panel's own.
     function turn(delta: int): void {
         const index = root.shownIndex + delta
@@ -104,7 +113,7 @@ FocusScope {
             return
         root.shown = root.pages[index]
         if (root.shown !== "animated")
-            root.panelRequested(root.shown === "palette" ? "palette" : "appearance")
+            root.panelRequested(root.shown === "wallpaper" ? "appearance" : root.shown)
     }
 
     // Five daubs, in the board's order: the accent and the four status hues.
@@ -143,7 +152,7 @@ FocusScope {
 
         // ── STRIPS ──────────────────────────────────────────────────────────
 
-        // All three live here, each parked a strip's height per page away
+        // Each strip is parked a strip's height per page away
         // from the one shown, so turning the page slides them past each other.
         Item {
             id: pages
@@ -343,6 +352,67 @@ FocusScope {
                     }
                 }
             }
+
+            Carousel {
+                id: effects
+
+                width: pages.width
+                height: pages.height
+                y: (3 - root.shownIndex) * pages.height
+                opacity: root.onEffects ? 1 : 0
+                current: root.appliedEffect
+                model: WallpaperService.effects
+                tileWidth: root.tileWidth
+                tileHeight: root.tileHeight
+                centreScale: root.centreScale
+                gap: root.gap
+                onActivated: root.apply()
+
+                Behavior on y { NumberAnimation { duration: Theme.durationMorph; easing.type: Theme.easing } }
+                Behavior on opacity { NumberAnimation { duration: Theme.durationMorph; easing.type: Theme.easing } }
+
+                delegate: CarouselTile {
+                    id: effect
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.radiusMedium
+                        color: effect.hovered ? Theme.surfaceHoverIn(QsWindow.window) : Theme.surfaceIn(QsWindow.window)
+                        border.color: effect.centred ? Theme.accent : Theme.borderIn(QsWindow.window)
+                        border.width: effect.centred ? 2 : 1
+
+                        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
+                        Behavior on border.color { ColorAnimation { duration: Theme.durationFast } }
+
+                        Column {
+                            anchors.centerIn: parent
+                            width: parent.width - 16
+                            spacing: 10
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: effect.modelData.id === "none" ? "󰸉" : "󰔎"
+                                font.family: Theme.fontMono
+                                font.pixelSize: 24
+                                color: effect.centred ? Theme.accent : Theme.textMuted
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: Tr.t(effect.modelData.name)
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeSmall
+                                font.weight: effect.centred ? Font.DemiBold : Font.Normal
+                                color: effect.centred ? Theme.text : Theme.textMuted
+                            }
+                        }
+
+                        AppliedMark { visible: effect.modelData.id === WallpaperService.currentEffect }
+                    }
+                }
+            }
         }
 
         // ── FOOTER ──────────────────────────────────────────────────────────
@@ -353,7 +423,9 @@ FocusScope {
 
             Text {
                 Layout.fillWidth: true
-                text: root.onPalette ? (root.centredPalette?.badge ?? "")
+                text: root.onEffects ? (WallpaperService.processingEffect
+                        ? Tr.t("Applying…") : Tr.t(root.centredEffect?.name ?? ""))
+                    : root.onPalette ? (root.centredPalette?.badge ?? "")
                     : root.onAnimated ? (root.centredAnimation?.name ?? "")
                     : (root.centredWallpaper?.name ?? "")
                 elide: Text.ElideRight

@@ -40,6 +40,7 @@ Singleton {
         { name: "settings",       label: "Settings",             description: "Shell · Open settings" },
         { name: "appearance",     label: "Appearance",           description: "Shell · Open appearance" },
         { name: "palette",        label: "Palette",              description: "Shell · Open the palette" },
+        { name: "effects",        label: "Wallpaper effects",    description: "Island · Open the wallpaper effects" },
         { name: "stats",          label: "System statistics",    description: "Shell · Open system statistics" },
         { name: "session",        label: "Session menu",         description: "Session · Session menu" },
         { name: "lock",           label: "Lock the screen",      description: "Session · Lock the screen" },

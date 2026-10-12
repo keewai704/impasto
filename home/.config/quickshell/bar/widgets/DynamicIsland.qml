@@ -77,6 +77,7 @@ Rectangle {
         controls:   { width: ControlsService.panelWidth, height: ControlsService.panelHeight },
         appearance: root.appearanceSize,
         palette:    root.appearanceSize,
+        effects:    root.appearanceSize,
         stats:      { width: 940,  height: 614 },
         // Depends on the results when `launcherFits` is on.
         launcher:   { width: LauncherService.panelWidth,
@@ -153,6 +154,7 @@ Rectangle {
         controls: controlsPanel,
         appearance: appearancePanel,
         palette: appearancePanel,
+        effects: appearancePanel,
         launcher: launcherPanel,
         wifi: networkDetail,
         sound: soundDetail,
@@ -536,7 +538,7 @@ Rectangle {
     Component {
         id: appearancePanel
         AppearancePanel {
-            page: islandState.openPanel === "palette" ? "palette" : "wallpaper"
+            page: islandState.openPanel === "appearance" ? "wallpaper" : islandState.openPanel
             onClosed: root.close()
             // Up and Down switch strips by panel name, so `page` follows
             // `openPanel`.

@@ -371,6 +371,12 @@ ShellRoot {
     }
 
     GlobalShortcut {
+        name: "effects"
+        description: "Open the island wallpaper effects"
+        onPressed: root.island?.toggle("effects")
+    }
+
+    GlobalShortcut {
         name: "notes"
         description: "Open the notes"
         onPressed: root.island?.toggle("notes")
