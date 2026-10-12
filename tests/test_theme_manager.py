@@ -111,11 +111,13 @@ class ThemeTemplateTests(unittest.TestCase):
         (self.templates / "client.css").symlink_to(source)
         theme.export_theme_templates(self.colors)
         result = self.rendered / "client.css"
+        watched_inode = result.stat().st_ino
         app_config = self.root / "quick.css"
         app_config.symlink_to(result)
         self.colors["accent"] = "#654321"
         theme.export_theme_templates(self.colors)
         self.assertTrue(app_config.is_symlink())
+        self.assertEqual(result.stat().st_ino, watched_inode)
         self.assertIn("--accent: #654321; --rgb: 101, 67, 33;", app_config.read_text())
         self.assertIn("font-family: Existing", app_config.read_text())
         self.assertIn("@import url(base.css);", app_config.read_text())

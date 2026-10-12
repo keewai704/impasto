@@ -614,14 +614,21 @@ def hex_to_rgb(value):
     return tuple(int(value[index:index + 2], 16) for index in (0, 2, 4))
 
 
-def write_if_changed(path, contents):
+def write_if_changed(path, contents, *, preserve_inode=False):
     try:
         with open(path, encoding="utf-8") as handle:
             if handle.read() == contents:
                 return False
     except FileNotFoundError:
         pass
+    if nix_managed(path):
+        raise PermissionError(f"{path} is managed by Nix")
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    if preserve_inode:
+        # Legcord watches the inode; replacing it loses later palette updates.
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(contents)
+        return True
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
@@ -657,7 +664,7 @@ def render_theme_templates(colors):
             try:
                 with open(source, encoding="utf-8") as handle:
                     contents = render_theme_template(handle.read(), colors)
-                if write_if_changed(target, contents) and relative.startswith("fcitx5/"):
+                if write_if_changed(target, contents, preserve_inode=True) and relative.startswith("fcitx5/"):
                     reload_fcitx = True
             except (OSError, ValueError) as error:
                 success = False
