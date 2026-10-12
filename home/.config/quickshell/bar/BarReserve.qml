@@ -29,8 +29,12 @@ PanelWindow {
 
     implicitHeight: 1
     color: "transparent"
+    // Hyprland adds its outer gap below the exclusive zone. Account for it
+    // so the visible gap below the bar matches the inset above its capsules.
+    readonly property int windowTopGap: CompositorService.value("general:gaps_out", 18)
     // Nothing in zen, so the windows take the band.
-    exclusiveZone: SettingsService.barHidden ? 0 : Theme.barReserve
+    exclusiveZone: SettingsService.barHidden ? 0
+        : Math.max(0, Theme.barReserve + Theme.barTopMargin - root.windowTopGap)
 
     // Under everything, and deaf.
     WlrLayershell.layer: WlrLayer.Background

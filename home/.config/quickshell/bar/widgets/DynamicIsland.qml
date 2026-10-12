@@ -403,12 +403,12 @@ Rectangle {
                 id: collapsedLoader
 
                 anchors.fill: parent
-                // Attached, the contents are centred in the full height,
-                // matching the bar's raised midline (`Bar.laneY`).
-                anchors.topMargin: root.size.padding + root.notchPad / 2
+                // The notch extends above the contents, which stay aligned
+                // with the side capsules (`Bar.laneY`).
+                anchors.topMargin: root.size.padding + root.notchPad
                 anchors.leftMargin: root.size.padding
                 anchors.rightMargin: root.size.padding
-                anchors.bottomMargin: root.size.padding + root.notchPad / 2
+                anchors.bottomMargin: root.size.padding
                 sourceComponent: root.layerComponents[islandState.layer] ?? restLayer
 
                 onSourceComponentChanged: fade.restart()

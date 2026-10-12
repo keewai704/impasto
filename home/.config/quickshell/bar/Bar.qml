@@ -175,11 +175,9 @@ PanelWindow {
     // (`GlassSheen`), for the fillets that carry it on.
     readonly property real notchSheen: Theme.glass && !island.paper ? Theme.glassSheenDepth : 0
 
-    // The line everything on the bar is centred on. Attached, the island
-    // reaches the screen edge, so its centre is half a margin higher and the
-    // sides move up to match.
-    readonly property real laneY: SettingsService.islandAttached
-        ? Theme.barTopMargin / 2 : Theme.barTopMargin
+    // The sides and the island's contents keep the same inset. In notch
+    // mode only the island's background extends up to the screen edge.
+    readonly property real laneY: Theme.barTopMargin
 
     readonly property int collapsedHeight: Theme.barBand
 
@@ -204,7 +202,7 @@ PanelWindow {
     implicitHeight: root.screen.height
 
     // Input region: the bar's band, plus the island's shape (the band's, in
-    // one capsule) with 12 px below it so the bottom edge still counts. The
+    // one capsule) with up to 12 px below it, within the gap to windows. The
     // whole screen only while the control centre is being arranged, since
     // blocks are dragged out of the tray card, which moves. Outside clicks are
     // left to the focus grab, so windows under an open panel stay usable.
@@ -237,7 +235,7 @@ PanelWindow {
         Region {
             x: root.shapeLeft
             width: root.inert ? 0 : root.shapeRight - root.shapeLeft
-            height: root.islandTopMargin + island.height + 12
+            height: root.islandTopMargin + island.height + Math.min(12, Theme.barTopMargin)
         }
     }
 

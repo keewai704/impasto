@@ -203,13 +203,12 @@ QtObject {
     readonly property int barTopMargin: SettingsService.barMargin
     readonly property int capsuleSpacing: 8
 
-    // Exclusive zone: exactly what the bar paints. Hyprland adds `gaps_out`
-    // below it, so reserving more leaves a larger top gap than on the other
-    // edges.
+    // The bottom edge of the resting bar. BarReserve accounts for Hyprland's
+    // outer gap separately to keep equal space above and below the capsules.
     readonly property int barReserve: root.barTopMargin + root.capsuleHeight
 
-    // Where the bar's input region ends: 8 px of slack under the capsules.
-    readonly property int barBand: root.barReserve + 8
+    // Up to 8 px of input slack, without covering the windows below the bar.
+    readonly property int barBand: root.barReserve + Math.min(8, root.barTopMargin)
 
     // ── DESKTOP GRID ────────────────────────────────────────────────────────
     //
