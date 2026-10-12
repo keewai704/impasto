@@ -92,12 +92,6 @@ Rectangle {
         // A program asking for root (`PolkitService`).
         auth:       { width: 460,  height: 236 },
         machines:   { width: 860,  height: 580 },
-        // A row per creature, plus one for the next egg.
-        pet:        { width: 560,  height: 205 + 62 * PetService.family.length },
-        // The shelf of cards, or the game being played at its own size.
-        games:      GamesService.playing !== ""
-            ? GamesService.panelSize(GamesService.playing)
-            : { width: GamesService.shelfWidth, height: GamesService.shelfHeight },
         // Declared by their services, which the panels read back for layout.
         notes:      { width: NotesService.panelWidth, height: NotesService.panelHeight },
         board:      { width: TasksService.panelWidth, height: TasksService.panelHeight },
@@ -171,8 +165,6 @@ Rectangle {
         session: sessionPanel,
         auth: authPanel,
         machines: machinesPanel,
-        pet: petPanel,
-        games: gamesPanel,
         notes: notesPanel,
         board: boardPanel,
         keys: keysPanel,
@@ -629,16 +621,6 @@ Rectangle {
     }
 
     Component {
-        id: petPanel
-        PetPanel { onClosed: root.close() }
-    }
-
-    Component {
-        id: gamesPanel
-        GamesPanel { onClosed: root.close() }
-    }
-
-    Component {
         id: notesPanel
         NotesPanel { onClosed: root.close() }
     }
@@ -658,7 +640,7 @@ Rectangle {
         PackagesPanel { onClosed: root.close() }
     }
 
-    // A module asking for a panel: the arcade's detail opening the arcade.
+    // A module asking for a panel: the notes detail opening the deck.
     Connections {
         target: ModuleService
 

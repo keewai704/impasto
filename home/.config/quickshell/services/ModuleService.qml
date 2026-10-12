@@ -29,7 +29,7 @@ import "../theme"
 Singleton {
     id: root
 
-    //   bar      whether it can go on the bar (board, deck and arcade live on
+    //   bar      whether it can go on the bar (board and deck live on
     //            the desktop and behind their panels instead)
     //   desk     false for the one module with no desktop face
     //   width    detail size; none for the spectrum, which has no detail and
@@ -53,8 +53,6 @@ Singleton {
         { id: "github",        name: "GitHub",        bar: false, width: Theme.cardWidth, height: Theme.cardHeight(0, GithubService.cardGrid) },
         { id: "stats",         name: "System",        bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, Theme.cardRowGap + 36) },
         { id: "updates",       name: "Updates",       bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
-        { id: "pet",           name: "Pet",           bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, Theme.cardRowGap + 32) },
-        { id: "games",         name: "Games",         bar: false, width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
         { id: "calendar",      name: "Calendar",      bar: true,  width: 340, height: 330 },
         { id: "notes",         name: "Notes",         bar: false, width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
         { id: "tasks",         name: "Tasks",         bar: false, width: Theme.cardWidth, height: Theme.cardHeight(4, 0) },
@@ -73,17 +71,17 @@ Singleton {
     //
     // Every door of the control centre can go on the bar, under its name and
     // glyph, and so can the control centre itself and the capture surface.
-    // Not the statistics or the pet: on the bar those are modules, and a
-    // button beside them would be the same piece without its figure. Alone in
-    // a capsule, a button is drawn as a circle.
+    // Not the statistics: on the bar it is a module, and a button beside it
+    // would be the same piece without its figure. Alone in a capsule, a
+    // button is drawn as a circle.
     //
-    // On the bar an id is a button before it is a module; notes and games are
-    // modules only on the desktop.
+    // On the bar an id is a button before it is a module; notes are a module
+    // only on the desktop.
     //
     // Capture is what the capture key does: the photo is taken at once, so
     // whatever the island has open is in it.
     readonly property var buttonIds: ["launcher", "overview", "controls", "capture",
-        "appearance", "notes", "board", "games", "keys", "packages", "settings", "session"]
+        "appearance", "notes", "board", "keys", "packages", "settings", "session"]
 
     readonly property var buttons: {
         const out = {}
@@ -165,7 +163,7 @@ Singleton {
     // A state or a count (the network, the bell, the date, the pending
     // updates) has nothing to fill, so it keeps its symbol in either shape.
     readonly property var ringed: ["media", "timer", "claude", "codex", "battery", "volume",
-        "brightness", "stats", "pet"]
+        "brightness", "stats"]
 
     // A piece's own shape when it has one, the bar's when it does not.
     function shapeOf(id: string, own: var): string {
@@ -180,7 +178,7 @@ Singleton {
     // ── GLYPH AND FIGURE ────────────────────────────────────────────────────
     //
     // One table for every place a module's symbol and figure appear (bar,
-    // glance, settings), in either chip shape. Claude and the pet draw their
+    // glance, settings), in either chip shape. Claude and Codex draw their
     // own mark instead of a glyph (`ChipFace`).
     function glyphOf(id: string): string {
         switch (id) {
@@ -245,8 +243,6 @@ Singleton {
             return CodexService.measured ? `${Math.round(CodexService.gauge * 100)}%` : "—"
         case "stats":
             return `${StatsService.cpu.toFixed(0)}%`
-        case "pet":
-            return PetService.hatched ? `Lv ${PetService.level}` : "Egg"
         case "network":
             return NetworkService.connectionName
         case "bluetooth":
@@ -494,8 +490,6 @@ Singleton {
                      height: Theme.cardHeight(Math.min(6, NotificationService.history.length) + 1, 0) }
         if (id === "updates")
             return { width: item.width, height: Theme.cardHeight(Math.min(3, UpdatesService.updates.length) + 1, 0) }
-        if (id === "games")
-            return { width: item.width, height: Theme.cardHeight(Math.min(3, GamesService.ranked.length) + 1, 0) }
         if (id === "notes")
             return { width: item.width, height: Theme.cardHeight(Math.min(3, NotesService.live.length) + 1, 0) }
         if (id === "tasks")
@@ -535,7 +529,7 @@ Singleton {
         root.activationRequested(id)
     }
 
-    // A module asking for a panel, e.g. the games detail opening the arcade.
+    // A module asking for a panel, e.g. the notes detail opening the deck.
     signal panelRequested(string panel)
 
     function requestPanel(panel: string): void {
@@ -594,12 +588,6 @@ Singleton {
         case "updates":
             // False on a machine with neither checkupdates nor pacman.
             return UpdatesService.available
-        case "pet":
-            // `ready` is constant true; reading it builds the service, and
-            // the service's trickle runs while the pet is on the bar.
-            return PetService.ready
-        case "games":
-            return GamesService.ready
         case "notes":
             return NotesService.ready
         case "tasks":

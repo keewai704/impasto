@@ -30,7 +30,7 @@ Scope {
     // carries no lists.
     readonly property var taskStates: ["todo", "doing", "done"]
     readonly property var panelNames: ["launcher", "controls", "overview", "appearance", "palette",
-        "stats", "session", "pet", "games", "notes", "board", "keys", "packages",
+        "stats", "session", "notes", "board", "keys", "packages",
         "machines", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight"]
 
     function ok(extra: var): string {

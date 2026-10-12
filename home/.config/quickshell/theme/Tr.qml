@@ -294,7 +294,6 @@ QtObject {
             "Network": "Red",
             "Weather": "Tiempo",
             "Updates": "Actualizaciones",
-            "Pet": "Mascota",
             "Spectrum": "Espectro",
             "Sound bars from whatever is playing, on the grid or along an edge.":
                 "Barras de sonido de lo que esté sonando, en la cuadrícula o a lo largo de un borde.",
@@ -318,7 +317,6 @@ QtObject {
             "Fading to the tip": "Desvanecido hacia la punta",
             "Solid": "Sólido",
             "Two colours": "Dos colores",
-            "Games": "Juegos",
             "Calendar": "Calendario",
             "Notes": "Notas",
             "Tasks": "Tareas",
@@ -363,30 +361,6 @@ QtObject {
             "Edges only on an empty workspace": "Bordes solo en un espacio vacío",
             "Gone while a window is open": "Fuera mientras haya una ventana abierta",
             "Over the windows": "Sobre las ventanas",
-
-            "How the creature is drawn, wherever it is drawn.":
-                "Cómo se dibuja la criatura, en todas partes donde se dibuja.",
-            "The species decides the colour and what the creature is; the style decides how it is drawn. The same drawing is used on the bar, in the pet's panel and on the desktop.":
-                "La especie decide el color y qué criatura es; el estilo decide cómo se dibuja. El mismo dibujo se usa en la barra, en el panel de la mascota y en el escritorio.",
-            "Creature": "Criatura",
-            "A different animal for each species.":
-                "Un animal distinto para cada especie.",
-            "Plush": "Peluche",
-            "One round body, shaded.": "Un solo cuerpo redondo, sombreado.",
-            "Paper": "Papel",
-            "Flat, cut from two tones.": "Plano, recortado en dos tonos.",
-            "Pixel": "Píxel",
-            "A sprite, sixteen cells across.":
-                "Un sprite de dieciséis celdas de ancho.",
-
-            "Unhatched — care for it and see": "Sin eclosionar — cuídalo y verás",
-            "Bring out": "Sacar",
-            "Out": "Fuera",
-            "The next egg": "El próximo huevo",
-            "Levels across the family": "Niveles de la familia",
-            "All five found": "Los cinco encontrados",
-            "Nothing left to find — there is a star waiting at level fifteen for each of them.":
-                "No queda nada por encontrar — a cada una le espera una estrella en el nivel quince.",
 
             // ── DESKTOP ─────────────────────────────────────────────────────
             "The desktop": "El escritorio",
@@ -523,8 +497,8 @@ QtObject {
             "Game mode on": "Modo juego activado",
             "Game mode off": "Modo juego desactivado",
             "Everything still, for a game or a slow machine.": "Todo quieto, para jugar o en un equipo lento.",
-            "Stops the shell's animations, the spectrum and the pet, and turns off Hyprland's animations, blur, shadow and glass. The settings below are kept and come back when it is turned off.":
-                "Para las animaciones del shell, el espectro y la mascota, y apaga las animaciones, el desenfoque, la sombra y el cristal de Hyprland. Los ajustes de abajo se conservan y vuelven al desactivarlo.",
+            "Stops the shell's animations and the spectrum, and turns off Hyprland's animations, blur, shadow and glass. The settings below are kept and come back when it is turned off.":
+                "Para las animaciones del shell y el espectro, y apaga las animaciones, el desenfoque, la sombra y el cristal de Hyprland. Los ajustes de abajo se conservan y vuelven al desactivarlo.",
             "Capture": "Capturar",
             "Annotate": "Anotar",
             "Read text": "Leer texto",

@@ -110,8 +110,7 @@ Singleton {
             network: ["2x2", "4x2"],                bluetooth: ["2x2", "4x2"],
             weather: ["2x2", "4x2", "4x4", "8x2"],  stats: ["2x2", "4x2", "4x4"],
             github: ["2x2", "4x2", "8x2"],
-            updates: ["2x2", "4x2"],                pet: ["2x2", "4x2"],
-            games: ["2x2", "4x2"],                  calendar: ["2x2", "4x2", "4x4"],
+            updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
             notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "8x2"],           photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
@@ -124,8 +123,7 @@ Singleton {
             network: ["2x2", "4x2"],                bluetooth: ["2x2", "4x2"],
             weather: ["2x2", "4x2", "4x4", "8x2"],  stats: ["2x2", "4x2", "4x4"],
             github: ["2x2", "4x2", "8x2"],
-            updates: ["2x2", "4x2"],                pet: ["2x2", "4x2"],
-            games: ["2x2", "4x2"],                  calendar: ["2x2", "4x2", "4x4"],
+            updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
             notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "4x4", "8x2"],    photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
@@ -143,8 +141,7 @@ Singleton {
             network: ["2x2", "4x2"],                bluetooth: ["2x2", "4x2"],
             weather: ["2x2", "4x2", "8x2"],         stats: ["2x2", "4x2"],
             github: ["2x2", "4x2", "8x2"],
-            updates: ["2x2", "4x2"],                pet: ["2x2", "4x2"],
-            games: ["2x2", "4x2"],                  calendar: ["2x2", "4x2", "4x4"],
+            updates: ["2x2", "4x2"],                calendar: ["2x2", "4x2", "4x4"],
             notes: ["2x2", "4x2", "4x4", "8x2"],    tasks: ["2x2", "4x2", "4x4"],
             clock: ["2x2", "4x2", "4x4", "8x2"],    photo: ["2x2", "4x2", "4x4", "8x2"],
             spectrum: ["4x2", "8x2", "4x4"]
@@ -391,14 +388,14 @@ Singleton {
     //   style    optional; defaults to the desktop's
     //   opacity  optional; defaults to the desktop's
     //
-    // `normalise` migrates legacy rows: a missing `key`, and the removed
-    // `bare`, `style` and `ink` fields.
+    // `normalise` drops modules no longer offered and migrates legacy rows:
+    // a missing `key`, and the removed `bare`, `style` and `ink` fields.
     function normalise(list: var): var {
         const rows = []
         const length = list && typeof list.length === "number" ? list.length : 0
         for (let index = 0; index < length; index++) {
             const kept = list[index]
-            if (!kept || !kept.id)
+            if (!kept || !root.offerable.some(entry => entry.id === kept.id))
                 continue
             const row = Object.assign({}, kept)
             if (!row.key)

@@ -64,7 +64,7 @@ opens into the island rather than into a popup of its own. A notification
 arrives there with its buttons, and stays in the control centre's list.
 
 <p align="center">
-  <img src=".github/assets/island-details.jpg" alt="Module details in the island: the player, the battery, Claude Code's usage, the processor and memory, the volume, the Wi-Fi list, the weather, the pet, the month with task dots, the tasks, a countdown and the GitHub wall" width="100%">
+  <img src=".github/assets/island-details.jpg" alt="Module details in the island: the player, the battery, Claude Code's usage, the processor and memory, the volume, the Wi-Fi list, the weather, the month with task dots, the tasks, a countdown and the GitHub wall" width="100%">
 </p>
 
 ## The bar
@@ -106,7 +106,7 @@ pins come first in the launcher. Right-click an icon for its windows by name.
 ## The desktop
 
 <p align="center">
-  <img src=".github/assets/desktop-themes.jpg" alt="The same desk split in three: Modern on the left, figures with captions; Analogue in the middle, a thermometer, a wall calendar, a battery cell, a knob, a parcel, a joystick; Sticker on the right, die-cut shapes in pastel colours for the weather, the pet, the date, a clock and the processor" width="100%">
+  <img src=".github/assets/desktop-themes.jpg" alt="The same desk split in three: Modern on the left, figures with captions; Analogue in the middle, a thermometer, a wall calendar, a battery cell, a knob, a parcel; Sticker on the right, die-cut shapes in pastel colours for the weather, the date, a clock and the processor" width="100%">
 </p>
 
 **Any module can live on the wallpaper**, on a grid, in four shapes: a square,
@@ -152,18 +152,6 @@ with others along an edge as tabs that peek out under the pointer.
 cards dragged between the lanes, and a task's day shows as a dot under the
 month wherever a month is drawn.
 
-## Games and pets
-
-<p align="center">
-  <img src=".github/assets/games-and-pets.jpg" alt="Tetris and Whack-a-Mole played in the island, and the pets' page with Pip out and the rest of the family waiting" width="100%">
-</p>
-
-**Eleven small games, played in the island** — `SUPER + G` opens a shelf, and
-the island becomes the board. **A family of five small creatures lives on the
-bar**: one out at a time, earning levels from being fed and played with, each
-hatched from an egg and drawn in one of four styles. Nothing dies, and a week
-away costs nothing.
-
 ## Lock and login
 
 <p align="center">
@@ -192,7 +180,7 @@ another, removes one, and lets you try it without locking.
 ## Settings
 
 <p align="center">
-  <img src=".github/assets/settings.jpg" alt="Two pages of the settings window: the bar arranged on a picture of it from a catalogue of modules and buttons, and the desktop's module settings with the pet drawn in its four styles" width="100%">
+  <img src=".github/assets/settings.jpg" alt="Two pages of the settings window: the bar arranged on a picture of it from a catalogue of modules and buttons, and the desktop's module settings" width="100%">
 </p>
 
 **Settings is the one panel that is not the island** — an ordinary window where

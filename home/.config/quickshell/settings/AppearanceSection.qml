@@ -489,7 +489,7 @@ SettingsSection {
         SettingGroup {
             title: Tr.t("Game mode")
             note: Tr.t("Everything still, for a game or a slow machine.")
-            hint: Tr.t("Stops the shell's animations, the spectrum and the pet, and turns off Hyprland's animations, blur, shadow and glass. The settings below are kept and come back when it is turned off.")
+            hint: Tr.t("Stops the shell's animations and the spectrum, and turns off Hyprland's animations, blur, shadow and glass. The settings below are kept and come back when it is turned off.")
 
             SettingRow {
                 label: Tr.t("Game mode")

@@ -371,18 +371,6 @@ ShellRoot {
     }
 
     GlobalShortcut {
-        name: "pet"
-        description: "Open the pet"
-        onPressed: root.island?.toggle("pet")
-    }
-
-    GlobalShortcut {
-        name: "games"
-        description: "Open the games"
-        onPressed: root.island?.toggle("games")
-    }
-
-    GlobalShortcut {
         name: "notes"
         description: "Open the notes"
         onPressed: root.island?.toggle("notes")
