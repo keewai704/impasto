@@ -471,9 +471,9 @@ Singleton {
         { id: "shortcuts",     name: "Shortcuts",     icon: "󰕰", sizes: ["1x1", "2x1", "3x1", "1x2", "2x2", "4x1", "6x1"] }
     ]
 
-    // Toggles, sliders and appearance on the left; media, weather, calendar
-    // and the shortcuts in the middle; notifications on the right. The
-    // session's actions are already in the top row, so they get no block.
+    // Toggles, sliders and appearance on the left; media, weather and calendar
+    // in the middle; notifications on the right. Session actions and shortcuts
+    // are already in the top row, so they get no blocks.
     readonly property var defaultBlocks: [
         { id: "toggles",       col: 0, row: 0, size: "2x3" },
         { id: "volume",        col: 0, row: 3, size: "2x1" },
@@ -481,8 +481,7 @@ Singleton {
         { id: "appearance",    col: 0, row: 5, size: "2x3" },
         { id: "media",         col: 2, row: 0, size: "2x2" },
         { id: "weather",       col: 2, row: 2, size: "2x2" },
-        { id: "calendar",      col: 2, row: 4, size: "2x3" },
-        { id: "shortcuts",     col: 2, row: 7, size: "2x1" },
+        { id: "calendar",      col: 2, row: 4, size: "2x4" },
         { id: "notifications", col: 4, row: 0, size: "2x8" }
     ]
 
