@@ -15,6 +15,7 @@ import "../../services"
 import "../island"
 import "../modules"
 import "../../components"
+import "../../bitwarden"
 
 // One capsule that changes shape to fit whatever it shows. IslandState picks
 // the layer, this sizes the capsule for it, and a Loader swaps the contents;
@@ -129,6 +130,7 @@ Rectangle {
         // Declared by their services, which the panels read back for layout.
         notes:      { width: NotesService.panelWidth, height: NotesService.panelHeight },
         board:      { width: TasksService.panelWidth, height: TasksService.panelHeight },
+        vault:      { width: 960, height: 620 },
         // The key sheet's columns come from the compositor's bind list.
         keys:       { width: ShortcutService.sheetWidth, height: ShortcutService.sheetHeight },
         packages:   { width: PackagesService.panelWidth, height: PackagesService.panelHeight },
@@ -215,6 +217,7 @@ Rectangle {
         games: gamesPanel,
         notes: notesPanel,
         board: boardPanel,
+        vault: vaultPanel,
         keys: keysPanel,
         packages: packagesPanel,
         module: moduleDetail,
@@ -738,6 +741,11 @@ Rectangle {
     Component {
         id: keysPanel
         KeysPanel { onClosed: root.close() }
+    }
+
+    Component {
+        id: vaultPanel
+        BitwardenPanel { onClosed: root.close() }
     }
 
     Component {

@@ -253,7 +253,7 @@ Scope {
 
         readonly property var names: ["launcher", "controls", "overview", "appearance", "palette",
             "stats", "session", "pet", "games", "notes", "board", "keys", "packages",
-            "machines", "servers", "screentime", "camera", "player", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight", "power", "record"]
+            "machines", "servers", "screentime", "camera", "player", "vault", "wifi", "bluetooth", "sound", "microphone", "brightness", "nightlight", "power", "record"]
 
         function open(name: string): string {
             if (names.indexOf(name) < 0)
@@ -269,6 +269,26 @@ Scope {
 
         function list(): string {
             return root.ok({ panels: names })
+        }
+    }
+
+    IpcHandler {
+        target: "vault"
+
+        function toggle(): string {
+            root.island?.toggle("vault")
+            return root.ok({ panel: "vault" })
+        }
+
+        function open(): string {
+            root.island?.open("vault")
+            return root.ok({ panel: "vault" })
+        }
+
+        function close(): string {
+            if (root.island?.state.openPanel === "vault")
+                root.island?.close()
+            return root.ok()
         }
     }
 

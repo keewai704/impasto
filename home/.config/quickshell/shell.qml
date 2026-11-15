@@ -517,6 +517,12 @@ ShellRoot {
     }
 
     GlobalShortcut {
+        name: "vault"
+        description: "Open the Bitwarden vault"
+        onPressed: root.island?.toggle("vault")
+    }
+
+    GlobalShortcut {
         name: "board"
         description: "Open the task board"
         onPressed: root.island?.toggle("board")
