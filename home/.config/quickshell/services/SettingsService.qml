@@ -66,6 +66,7 @@ Singleton {
     readonly property alias dockOpacity: config.dockOpacity
     readonly property alias dockGround: config.dockGround
     readonly property alias terminalGround: config.terminalGround
+    readonly property alias pureBlack: config.pureBlack
     readonly property alias superTapLauncher: config.superTapLauncher
     readonly property alias workspaceNumbersOnSuper: config.workspaceNumbersOnSuper
     readonly property alias volumeMax: config.volumeMax
@@ -901,6 +902,8 @@ Singleton {
 
         // kitty's ground, as `surfaceStyle`.
         property string terminalGround: "glass"
+
+        property bool pureBlack: false
 
         // A tap of Super alone opens the launcher.
         property bool superTapLauncher: false

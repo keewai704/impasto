@@ -223,7 +223,7 @@ FocusScope {
     // The adaptive entry shows the current theme until the wallpaper has been
     // read.
     function daubsOf(theme: var): var {
-        const colors = theme.adaptive ? ThemeService.dynamicColors : theme.colors
+        const colors = theme.adaptive ? ThemeService.adaptiveColorsOf(theme.id) : theme.colors
         return colors
             ? [colors.accent, colors.green, colors.yellow, colors.red, colors.blue]
             : [Theme.accent, Theme.green, Theme.yellow, Theme.red, Theme.blue]

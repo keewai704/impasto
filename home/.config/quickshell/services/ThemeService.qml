@@ -22,7 +22,8 @@ QtObject {
     readonly property string script: Quickshell.shellPath("scripts/theme_manager.py")
 
     property string activeId: "adaptive"
-    property var dynamicColors: null
+    property var adaptiveColors: ({})
+    readonly property var dynamicColors: root.adaptiveColors[root.isAdaptive(root.activeId) ? root.activeId : "adaptive"] ?? null
 
     // The adaptive entry has no static colours: they come from the wallpaper.
     readonly property var adaptiveTheme: ({
@@ -34,7 +35,26 @@ QtObject {
     })
 
     // Built from Palettes so a palette is described exactly once.
-    readonly property var availableThemes: [root.adaptiveTheme].concat(Palettes.list)
+    readonly property var adaptiveThemes: [
+        root.adaptiveTheme,
+        { id: "adaptive-dominant", name: "Adaptive · Dominant", badge: "Most Area", adaptive: true, colors: null },
+        { id: "adaptive-muted", name: "Adaptive · Muted", badge: "Soft Tone", adaptive: true, colors: null },
+        { id: "adaptive-complement", name: "Adaptive · Complement", badge: "Opposite Hue", adaptive: true, colors: null }
+    ]
+
+    readonly property var availableThemes: root.adaptiveThemes.concat(Palettes.list)
+
+    function isAdaptive(themeId: string): bool {
+        return root.adaptiveThemes.some(entry => entry.id === themeId)
+    }
+
+    function adaptiveEntry(themeId: string): var {
+        return root.adaptiveThemes.find(entry => entry.id === themeId) ?? root.adaptiveTheme
+    }
+
+    function adaptiveColorsOf(themeId: string): var {
+        return root.adaptiveColors[themeId] ?? null
+    }
 
     // The wallpaper colours once extracted, the current theme until then.
     readonly property var adaptiveSwatches: root.dynamicColors
@@ -58,15 +78,16 @@ QtObject {
     }
 
     readonly property Process extractProcess: Process {
-        command: [root.script, "extract-colors"]
+        command: [root.script, "extract-variants"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const colors = root.parseJson(text, "wallpaper colours")
-                if (!colors)
+                const variants = root.parseJson(text, "wallpaper colours")
+                if (!variants)
                     return
-                root.dynamicColors = colors
-                if (root.activeId === "adaptive") {
-                    Theme.apply(colors, root.adaptiveTheme.name)
+                root.adaptiveColors = variants
+                const colors = root.dynamicColors
+                if (colors && root.isAdaptive(root.activeId)) {
+                    Theme.apply(root.look(colors), root.adaptiveEntry(root.activeId).name)
                     root.pushTerminal(colors)
                 }
             }
@@ -121,6 +142,29 @@ QtObject {
     // The terminal's ground, chosen beside the shell's.
     readonly property string terminalGround: SettingsService.terminalGround
 
+    readonly property bool pureBlack: SettingsService.pureBlack
+
+    onPureBlackChanged: if (SettingsService.arrived) root.setTheme(root.activeId, false)
+
+    function darken(value: string, amount: real): string {
+        const c = Qt.color(value)
+        return Qt.rgba(c.r * (1 - amount), c.g * (1 - amount), c.b * (1 - amount), 1).toString()
+    }
+
+    function look(colors: var): var {
+        if (!colors || !root.pureBlack)
+            return colors
+        const ground = Qt.color(colors.background)
+        if (0.2126 * ground.r + 0.7152 * ground.g + 0.0722 * ground.b > 0.5)
+            return colors
+        return Object.assign({}, colors, {
+            background: "#000000",
+            surface: root.darken(colors.surface, 0.6),
+            surfaceHover: root.darken(colors.surfaceHover, 0.4),
+            border: root.darken(colors.border, 0.25)
+        })
+    }
+
     onTerminalGroundChanged: root.pushTerminalGround()
 
     function pushTerminalGround(): void {
@@ -158,6 +202,8 @@ QtObject {
         function onArrivedChanged(): void {
             root.pushedTargets = root.themeTargets
             root.pushTerminalSettings()
+            if (root.pureBlack)
+                root.setTheme(root.activeId, false)
         }
     }
 
@@ -223,7 +269,7 @@ QtObject {
             return
         }
         root.terminalProcess.command = [root.script, "push-terminal-palette",
-                                        JSON.stringify(colors)]
+                                        JSON.stringify(root.look(colors))]
         root.terminalProcess.running = true
     }
 
@@ -232,7 +278,7 @@ QtObject {
 
     // The colours on screen, for a push that is not a change of palette.
     function currentColors(): var {
-        if (root.activeId === "adaptive")
+        if (root.isAdaptive(root.activeId))
             return root.dynamicColors
         return Palettes.byId(root.activeId)?.colors ?? null
     }
@@ -268,9 +314,9 @@ QtObject {
         root.activeId = themeId
         Theme.activeId = themeId
 
-        if (themeId === "adaptive") {
+        if (root.isAdaptive(themeId)) {
             if (root.dynamicColors) {
-                Theme.apply(root.dynamicColors, root.adaptiveTheme.name)
+                Theme.apply(root.look(root.dynamicColors), root.adaptiveEntry(themeId).name)
                 root.pushTerminal(root.dynamicColors)
             } else {
                 root.reloadAdaptiveColors()
@@ -278,7 +324,7 @@ QtObject {
         } else {
             const palette = Palettes.byId(themeId)
             if (palette) {
-                Theme.apply(palette.colors, palette.name)
+                Theme.apply(root.look(palette.colors), palette.name)
                 root.pushTerminal(palette.colors)
             } else {
                 console.warn("Unknown palette:", themeId)

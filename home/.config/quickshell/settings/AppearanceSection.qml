@@ -76,6 +76,15 @@ SettingsSection {
                     onClicked: root.panelRequested("appearance")
                 }
             }
+
+            SettingRow {
+                label: Tr.t("Pure black")
+
+                ToggleSwitch {
+                    checked: SettingsService.pureBlack
+                    onToggled: checked => SettingsService.set("pureBlack", checked)
+                }
+            }
         }
 
         // Each tile loops its awww transition in miniature.

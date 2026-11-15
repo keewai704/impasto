@@ -182,7 +182,7 @@ Singleton {
         // `applied` repaints, so it is only set here if not already active.
         const palette = target.palette
         if (palette !== "" && palette !== ThemeService.activeId
-                && (palette === "adaptive" || Palettes.byId(palette)))
+                && (ThemeService.isAdaptive(palette) || Palettes.byId(palette)))
             ThemeService.setTheme(palette)
         root.showWallpaper(target.wallpaper)
 
@@ -330,7 +330,7 @@ Singleton {
     // profile's.
     function fromDocument(document: var, fallback: string): var {
         const palette = typeof document.palette === "string"
-            && (document.palette === "adaptive" || Palettes.byId(document.palette))
+            && (ThemeService.isAdaptive(document.palette) || Palettes.byId(document.palette))
             ? document.palette : ""
         return {
             id: root.newId(),

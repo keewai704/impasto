@@ -3925,9 +3925,92 @@ def pick_accent(swatches):
     return max(colorful, key=lambda c: c["sat"]) if colorful else NEUTRAL_ACCENT
 
 
-def build_palette(image_path):
+ADAPTIVE_METHODS = ("vibrant", "dominant", "muted", "complement")
+
+
+def sample_histogram(image_path):
+    magick = shutil.which("magick") or shutil.which("convert")
+    if not magick:
+        return []
+    command = [magick, image_path, "-resize", "120x120", "-colors", "24",
+               "-format", "%c", "histogram:info:-"]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError) as error:
+        sys.stderr.write(f"Color extraction failed: {error}\n")
+        return []
+    swatches = []
+    for count, value in re.findall(r"^\s*(\d+):.*?(#[0-9A-Fa-f]{6})", result.stdout, re.M):
+        red, green, blue = hex_to_rgb(value)
+        swatches.append({
+            "hex": value.upper(),
+            "r": red, "g": green, "b": blue,
+            "lum": luminance(red, green, blue),
+            "sat": saturation(red, green, blue),
+            "count": int(count),
+        })
+    return swatches
+
+
+def accent_of(value):
+    red, green, blue = hex_to_rgb(value)
+    return {"hex": value.upper(), "r": red, "g": green, "b": blue}
+
+
+def settle(swatch, low, high, sat_low=0.0, sat_high=1.0):
+    hue, lightness, sat = colorsys.rgb_to_hls(swatch["r"] / 255, swatch["g"] / 255, swatch["b"] / 255)
+    return accent_of(rgb_to_hex(*(c * 255 for c in colorsys.hls_to_rgb(
+        hue, min(high, max(low, lightness)), min(sat_high, max(sat_low, sat))))))
+
+
+def pick_dominant(swatches):
+    colourful = [s for s in swatches if s["sat"] > 0.12]
+    if not colourful:
+        return NEUTRAL_ACCENT
+    return settle(max(colourful, key=lambda s: s["count"]), 0.45, 0.65, 0.35)
+
+
+def pick_muted(swatches):
+    soft = [s for s in swatches if 0.08 < s["sat"] <= 0.45 and 0.3 < s["lum"] < 0.8]
+    if soft:
+        return settle(max(soft, key=lambda s: s["count"]), 0.5, 0.7, 0.0, 0.25)
+    return settle(pick_dominant(swatches), 0.5, 0.7, 0.0, 0.25)
+
+
+def pick_complement(image_path):
+    base = pick_accent(sample_colors(image_path))
+    hue, lightness, sat = colorsys.rgb_to_hls(base["r"] / 255, base["g"] / 255, base["b"] / 255)
+    turned = accent_of(rgb_to_hex(*(c * 255 for c in colorsys.hls_to_rgb((hue + 0.5) % 1.0, lightness, sat))))
+    return settle(turned, 0.45, 0.7, 0.45)
+
+
+def pick_for(method, image_path):
+    if method == "dominant":
+        return pick_dominant(sample_histogram(image_path))
+    if method == "muted":
+        return pick_muted(sample_histogram(image_path))
+    if method == "complement":
+        return pick_complement(image_path)
+    return pick_accent(sample_colors(image_path))
+
+
+def adaptive_method(theme_id):
+    if theme_id == "adaptive":
+        return "vibrant"
+    if isinstance(theme_id, str) and theme_id.startswith("adaptive-"):
+        method = theme_id.removeprefix("adaptive-")
+        if method in ADAPTIVE_METHODS:
+            return method
+    return None
+
+
+def adaptive_id(method):
+    return "adaptive" if method == "vibrant" else f"adaptive-{method}"
+
+
+def build_palette(image_path, method="vibrant"):
     """Derive a full UI palette from the wallpaper's dominant accent."""
-    accent = pick_accent(sample_colors(image_path))
+    accent = pick_for(method, image_path)
     red, green, blue = accent["r"], accent["g"], accent["b"]
 
     # Surfaces are near-black, tinted just enough to feel related to the accent.
@@ -3953,10 +4036,14 @@ def build_palette(image_path):
     }
 
 
-def extract_colors(image_path):
+def active_method():
+    return adaptive_method(load_state().get("activeTheme")) or "vibrant"
+
+
+def extract_colors(image_path, method=None):
     if not image_path or not os.path.isfile(image_path):
         return None
-    palette = build_palette(image_path)
+    palette = build_palette(image_path, method or active_method())
     ensure_state_dir()
     try:
         with open(DYNAMIC_COLORS_FILE, "w", encoding="utf-8") as handle:
@@ -4084,6 +4171,9 @@ def set_theme(theme_id):
     state = load_state()
     state["activeTheme"] = theme_id
     save_state(state)
+    method = adaptive_method(theme_id)
+    if method:
+        extract_colors(get_current_wallpaper(), method)
 
 
 # The exit status of an `apply-*` for a program switched off in
@@ -4113,16 +4203,36 @@ PALETTE_WRITERS = (
 )
 
 
+PALETTE_HOOKS_DIR = os.path.join(XDG_CONFIG_HOME, "impasto", "palette-hooks")
+
+
+def run_palette_hooks(colors):
+    try:
+        names = sorted(os.listdir(PALETTE_HOOKS_DIR))
+    except OSError:
+        return
+    payload = json.dumps(colors)
+    for name in names:
+        hook = os.path.join(PALETTE_HOOKS_DIR, name)
+        if not os.access(hook, os.X_OK):
+            continue
+        try:
+            subprocess.run([hook], input=payload, text=True, timeout=30, check=False)
+        except (OSError, subprocess.SubprocessError) as error:
+            sys.stderr.write(f"{name}: {error}\n")
+
+
 def push_palette(colors):
     for target, write in PALETTE_WRITERS:
         if target_enabled(target):
             write(colors)
+    run_palette_hooks(colors)
 
 
 def main():
     actions = ("list-wallpapers | list-animated | get-current | get-state | "
                "set-wallpaper <path> [transition] | "
-               "restore | extract-colors [path] | set-theme <id> | "
+               "restore | extract-colors [path] | extract-variants [path] | set-theme <id> | "
                "push-terminal-palette <json> | push-terminal-font <family> | "
                "apply-vscodium [json] | apply-nautilus | apply-vesktop")
     if len(sys.argv) < 2:
@@ -4145,6 +4255,14 @@ def main():
         print(json.dumps(state))
     elif action == "extract-colors":
         print(json.dumps(extract_colors(argument or get_current_wallpaper())))
+    elif action == "extract-variants":
+        image_path = argument or get_current_wallpaper()
+        if not image_path or not os.path.isfile(image_path):
+            print("null")
+        else:
+            extract_colors(image_path)
+            print(json.dumps({adaptive_id(method): build_palette(image_path, method)
+                              for method in ADAPTIVE_METHODS}))
     elif action == "set-wallpaper" and argument:
         transition = sys.argv[3] if len(sys.argv) >= 4 else "wipe"
         sys.exit(0 if set_wallpaper(argument, transition) else 1)

@@ -72,7 +72,7 @@ ClippingRectangle {
         ColorSwatch {
             Layout.alignment: Qt.AlignVCenter
             swatchSize: 11
-            colors: ThemeService.activeId === "adaptive"
+            colors: ThemeService.isAdaptive(ThemeService.activeId)
                 ? ThemeService.adaptiveSwatches
                 : (Palettes.byId(ThemeService.activeId)?.swatches ?? ThemeService.adaptiveSwatches)
         }
