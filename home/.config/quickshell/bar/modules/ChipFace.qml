@@ -38,8 +38,13 @@ Item {
     // capsule outline; alone and closed, it is the capsule.
     property bool alone: false
 
+    // Claude Code and OpenCode Go always wear the two-window status glyph
+    // (`DuoGlyph`), in either shape.
+    readonly property bool duo: root.device === null
+        && (root.moduleId === "claude" || root.moduleId === "opencode")
+
     // Only a module that measures has a ring, whatever shape is asked for.
-    readonly property bool ring: root.shape === "ring"
+    readonly property bool ring: root.duo || root.shape === "ring"
         && (root.device !== null || ModuleService.ringed.indexOf(root.moduleId) >= 0)
     readonly property string value: root.device
         ? `${root.device.name} ${Math.round(root.device.level * 100)}%`
@@ -143,10 +148,47 @@ Item {
 
         Loader {
             anchors.fill: parent
-            active: root.ring && root.moduleId !== "" && root.device === null
+            active: root.ring && root.moduleId !== "" && root.device === null && !root.duo
             sourceComponent: Module {
                 moduleId: root.moduleId
                 compact: true
+            }
+        }
+
+        // The arc is the five-hour window, the dots the week.
+        Loader {
+            anchors.fill: parent
+            active: root.duo
+            sourceComponent: root.moduleId === "claude" ? claudeDuo : opencodeDuo
+        }
+
+        Component {
+            id: claudeDuo
+
+            DuoGlyph {
+                arc: ClaudeService.limitsKnown ? ClaudeService.sessionFraction : ClaudeService.elapsed
+                dots: ClaudeService.weeklyFraction
+                dotsKnown: ClaudeService.limitsKnown
+
+                ClaudeMark {
+                    anchors.fill: parent
+                    color: Theme.indicator
+                }
+            }
+        }
+
+        Component {
+            id: opencodeDuo
+
+            DuoGlyph {
+                arc: OpencodeService.session ? OpencodeService.session.used : 0
+                dots: OpencodeService.week ? OpencodeService.week.used : 0
+                dotsKnown: OpencodeService.week !== null
+
+                OpencodeMark {
+                    anchors.fill: parent
+                    color: Theme.indicator
+                }
             }
         }
 
