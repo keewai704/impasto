@@ -33,7 +33,7 @@ Singleton {
             note: "Scales into place and decelerates with a long tail. Quick, and it never bounces.",
             curve: [0.32, 0.72, 0, 1],
             slow: 2.6, medium: 1.8, fast: 1.4,
-            windows: "slide", workspaces: "slide"
+            windows: "slide", workspaces: "slidevert"
         },
         {
             id: "snappy",
@@ -41,7 +41,7 @@ Singleton {
             note: "Half the distance and half the time. Movement you register rather than watch.",
             curve: [0.22, 1, 0.36, 1],
             slow: 1.3, medium: 1.0, fast: 0.8,
-            windows: "popin 94%", workspaces: "slide"
+            windows: "popin 94%", workspaces: "slidevert"
         },
         {
             id: "smooth",
@@ -57,7 +57,7 @@ Singleton {
             note: "Overshoots a little and settles back. The look most Hyprland presets are after.",
             curve: [0.05, 0.9, 0.1, 1.15],
             slow: 3.2, medium: 2.0, fast: 1.4,
-            windows: "popin 80%", workspaces: "slide"
+            windows: "popin 80%", workspaces: "slidevert"
         },
         {
             id: "off",
