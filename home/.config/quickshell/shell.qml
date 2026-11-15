@@ -11,9 +11,6 @@
 // transparent surface.
 //@ pragma Env QSG_DISTANCEFIELD_ANTIALIASING=gray
 
-// Application icons: one set, the same shape for every app.
-//@ pragma IconTheme WhiteSur-dark
-
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
