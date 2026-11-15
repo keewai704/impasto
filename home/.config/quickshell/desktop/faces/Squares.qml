@@ -257,7 +257,7 @@ Item {
                 ? ClaudeService.percent(ClaudeService.sessionFraction)
                 : ClaudeService.compact(ClaudeService.blockTokens)
             note: !ClaudeService.available ? Tr.t("no usage found")
-                : (ClaudeService.sessionMeasured ? Tr.t("of this block") : Tr.t("this block"))
+                : (ClaudeService.sessionMeasured ? Tr.t("of the 5 hours") : Tr.t("in the 5 hours"))
 
             ClaudeMark {
                 anchors.centerIn: parent

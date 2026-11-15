@@ -235,8 +235,8 @@ Item {
                 : ClaudeService.compact(ClaudeService.blockTokens)
             note: !ClaudeService.available ? Tr.t("no usage found")
                 : ClaudeService.sessionMeasured
-                ? `${Tr.t("of this block")} · ${ClaudeService.compact(ClaudeService.blockTokens)}`
-                : `${Tr.t("this block")} · ${ClaudeService.messages(ClaudeService.blockMessages)}`
+                ? `${Tr.t("of the 5 hours")} · ${ClaudeService.compact(ClaudeService.blockTokens)}`
+                : `${Tr.t("in the 5 hours")} · ${ClaudeService.messages(ClaudeService.blockMessages)}`
             extraShare: 0.42
 
             ClaudeMark {

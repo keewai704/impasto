@@ -21,7 +21,7 @@ Spread {
     hue: face.ink.accent
     reading: !CodexService.available ? Tr.t("No usage found")
         : CodexService.fullest ? Tr.t("%1 of the %2").arg(CodexService.figure).arg(CodexService.fullestName)
-        : Tr.t("Nothing to read yet")
+        : Tr.t("Nothing to read until Codex runs")
     note: !CodexService.available ? Tr.t("nothing to read")
         : CodexService.fullest ? CodexService.windowLine(CodexService.fullest)
         : Tr.t("until Codex runs again")

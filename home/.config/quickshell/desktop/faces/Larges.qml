@@ -248,7 +248,7 @@ Item {
             label: "Claude"
             reading: ClaudeService.available ? ClaudeService.compact(ClaudeService.blockTokens) : "—"
             note: !ClaudeService.available ? Tr.t("no usage found")
-                : `${Tr.t("this block")} · ${ClaudeService.messages(ClaudeService.blockMessages)} · ${ClaudeService.resetsIn}`
+                : `${Tr.t("in the 5 hours")} · ${ClaudeService.messages(ClaudeService.blockMessages)} · ${ClaudeService.resetsIn}`
 
             ClaudeMark {
                 anchors.centerIn: parent
@@ -273,8 +273,8 @@ Item {
 
                         Text {
                             text: ClaudeService.sessionMeasured
-                                ? `${Tr.t("block")} · ${ClaudeService.percent(ClaudeService.sessionFraction)}`
-                                : Tr.t("block · against the busiest on record")
+                                ? `${Tr.t("5 hours")} · ${ClaudeService.percent(ClaudeService.sessionFraction)}`
+                                : Tr.t("5 hours · against the busiest on record")
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSizeSmall
                             color: root.ink.muted
@@ -316,7 +316,7 @@ Item {
 
                     Text {
                         width: parent.width
-                        text: `${Tr.t("busiest block")} · ${ClaudeService.compact(ClaudeService.peakBlockTokens)}`
+                        text: `${Tr.t("busiest 5 hours")} · ${ClaudeService.compact(ClaudeService.peakBlockTokens)}`
                         elide: Text.ElideRight
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeSmall

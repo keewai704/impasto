@@ -155,7 +155,7 @@ Item {
             }
         }
 
-        // For usage the arc is the five-hour window, the dots the week.
+        // For usage the arc is the week, the dots the 5 hours.
         Loader {
             anchors.fill: parent
             active: root.duo
@@ -167,9 +167,8 @@ Item {
             id: claudeDuo
 
             DuoGlyph {
-                arc: ClaudeService.limitsKnown ? ClaudeService.sessionFraction : ClaudeService.elapsed
-                dots: ClaudeService.weeklyFraction
-                dotsKnown: ClaudeService.limitsKnown
+                arc: ClaudeService.limitsKnown ? ClaudeService.weeklyFraction : 0
+                dots: ClaudeService.limitsKnown ? ClaudeService.sessionFraction : ClaudeService.elapsed
 
                 ClaudeMark {
                     anchors.fill: parent
@@ -182,9 +181,9 @@ Item {
             id: opencodeDuo
 
             DuoGlyph {
-                arc: OpencodeService.session ? OpencodeService.session.used : 0
-                dots: OpencodeService.week ? OpencodeService.week.used : 0
-                dotsKnown: OpencodeService.week !== null
+                arc: OpencodeService.week ? OpencodeService.week.used : 0
+                dots: OpencodeService.session ? OpencodeService.session.used : 0
+                dotsKnown: OpencodeService.session !== null
 
                 OpencodeMark {
                     anchors.fill: parent

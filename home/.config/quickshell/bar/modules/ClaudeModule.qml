@@ -13,8 +13,8 @@ import "../../theme"
 import "../../services"
 import "../../components"
 
-// The account's limits — the session, the week and a week per model — with
-// the session's tokens and messages from the local transcripts. The ring is
+// The account's limits — the 5 hours, the week and a week per model — with
+// the 5 hours' tokens and messages from the local transcripts. The ring is
 // the fullest limit, or the time elapsed in the block when they are unknown.
 Item {
     id: root
@@ -69,7 +69,7 @@ Item {
             title: "Claude Code"
             subtitle: !ClaudeService.available && !ClaudeService.limitsKnown
                 ? Tr.t("No sessions on disk")
-                : [ClaudeService.plan, Tr.t("session %1").arg(ClaudeService.resetsIn)]
+                : [ClaudeService.plan, Tr.t("5 hours %1").arg(ClaudeService.resetsIn)]
                     .filter(part => part !== "").join(" · ")
 
             mark: RingIndicator {
@@ -91,7 +91,7 @@ Item {
 
             CardLimit {
                 visible: ClaudeService.limitsKnown
-                name: Tr.t("Session")
+                name: Tr.t("5 hours")
                 fraction: ClaudeService.sessionFraction
                 resets: ClaudeService.sessionResets
                 tint: ClaudeService.sessionFraction >= 0.85 ? Theme.indicatorBad
@@ -123,7 +123,7 @@ Item {
             }
 
             CardFact {
-                name: Tr.t("This session")
+                name: Tr.t("In the 5 hours")
                 value: Tr.t("%1 tokens · %2").arg(ClaudeService.compact(ClaudeService.blockTokens))
                     .arg(ClaudeService.messages(ClaudeService.blockMessages))
             }
@@ -131,7 +131,7 @@ Item {
             // Without the account's figures the week is counted too.
             CardFact {
                 visible: !ClaudeService.limitsKnown
-                name: Tr.t("This week")
+                name: Tr.t("In the week")
                 value: Tr.t("%1 tokens · %2").arg(ClaudeService.compact(ClaudeService.weekTokens))
                     .arg(ClaudeService.messages(ClaudeService.weekMessages))
             }

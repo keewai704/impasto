@@ -55,7 +55,7 @@ Singleton {
     readonly property var fullest: root.live.reduce(
         (worst, limit) => worst === null || limit.used > worst.used ? limit : worst, null)
 
-    readonly property string fullestName: root.fullest ? root.fullest.name.toLowerCase() : ""
+    readonly property string fullestName: root.fullest ? Tr.t(root.fullest.name).toLowerCase() : ""
 
     // "80%", or a dash with nothing running to read.
     readonly property string figure: root.measured ? `${Math.round(root.gauge * 100)}%` : "—"
