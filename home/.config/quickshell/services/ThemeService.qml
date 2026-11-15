@@ -255,6 +255,8 @@ QtObject {
     readonly property FileView greetingStampView: FileView {
         path: `${SettingsService.stateDirectory}/greeting.stamp`
         watchChanges: true
+        // Absent until the scenes are first drawn.
+        printErrors: false
         onFileChanged: reload()
         onLoaded: root.greetingStamp = text().trim()
     }

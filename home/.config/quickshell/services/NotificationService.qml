@@ -458,6 +458,8 @@ Singleton {
     readonly property FileView store: FileView {
         path: `${SettingsService.stateDirectory}/notifications.json`
         watchChanges: false
+        // Absent until the first notification is kept.
+        printErrors: false
 
         onLoaded: {
             try {
