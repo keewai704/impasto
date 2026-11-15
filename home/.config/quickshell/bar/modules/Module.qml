@@ -31,6 +31,7 @@ Item {
         timer: timerModule,
         claude: claudeModule,
         codex: codexModule,
+        opencode: opencodeModule,
         battery: batteryModule,
         volume: volumeModule,
         brightness: brightnessModule,
@@ -68,6 +69,7 @@ Item {
     Component { id: timerModule;   TimerModule { compact: root.compact } }
     Component { id: claudeModule;  ClaudeModule { compact: root.compact } }
     Component { id: codexModule;   CodexModule { compact: root.compact } }
+    Component { id: opencodeModule; OpencodeModule { compact: root.compact } }
     Component { id: batteryModule; BatteryModule { compact: root.compact } }
     Component { id: volumeModule;     VolumeModule { compact: root.compact } }
     Component { id: brightnessModule; BrightnessModule { compact: root.compact } }

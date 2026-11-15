@@ -37,6 +37,7 @@ singleton BluetoothService   1.0 services/BluetoothService.qml
 singleton DeviceService      1.0 services/DeviceService.qml
 singleton ClaudeService      1.0 services/ClaudeService.qml
 singleton CodexService       1.0 services/CodexService.qml
+singleton OpencodeService    1.0 services/OpencodeService.qml
 singleton UpdatesService     1.0 services/UpdatesService.qml
 singleton PetService         1.0 services/PetService.qml
 singleton ModuleService      1.0 services/ModuleService.qml
@@ -91,6 +92,7 @@ NotchFillet      1.0 components/NotchFillet.qml
 NotchOutline     1.0 components/NotchOutline.qml
 ClaudeMark       1.0 components/ClaudeMark.qml
 CodexMark        1.0 components/CodexMark.qml
+OpencodeMark     1.0 components/OpencodeMark.qml
 PaletteBoard     1.0 components/PaletteBoard.qml
 PetFace          1.0 components/PetFace.qml
 PetFamily        1.0 components/PetFamily.qml
@@ -163,6 +165,7 @@ MediaModule      1.0 bar/modules/MediaModule.qml
 TimerModule      1.0 bar/modules/TimerModule.qml
 ClaudeModule     1.0 bar/modules/ClaudeModule.qml
 CodexModule      1.0 bar/modules/CodexModule.qml
+OpencodeModule   1.0 bar/modules/OpencodeModule.qml
 BatteryModule    1.0 bar/modules/BatteryModule.qml
 VolumeModule     1.0 bar/modules/VolumeModule.qml
 BrightnessModule 1.0 bar/modules/BrightnessModule.qml

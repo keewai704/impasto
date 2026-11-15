@@ -43,6 +43,7 @@ Singleton {
         { id: "timer",         name: "Timer",         bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, 0) },
         { id: "claude",        name: "Claude",        bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(3, 0) },
         { id: "codex",         name: "Codex",         bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, 0) },
+        { id: "opencode",      name: "OpenCode Go",   bar: true,  desk: false, width: Theme.cardWidth, height: Theme.cardHeight(3, 0) },
         { id: "battery",       name: "Battery",       bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(3, 0) },
         { id: "volume",        name: "Volume",        bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(2, 0) },
         { id: "brightness",    name: "Brightness",    bar: true,  width: Theme.cardWidth, height: Theme.cardHeight(1, 0) },
@@ -137,6 +138,11 @@ Singleton {
                 CodexService.subscribe()
             else
                 CodexService.release()
+        } else if (id === "opencode") {
+            if (on)
+                OpencodeService.subscribe()
+            else
+                OpencodeService.release()
         } else if (id === "weather") {
             if (on)
                 WeatherService.subscribe()
@@ -179,7 +185,7 @@ Singleton {
     // Modules with a ring face: those whose reading fills from empty to full.
     // A state or a count (the network, the bell, the date, the pending
     // updates) has nothing to fill, so it keeps its symbol in either shape.
-    readonly property var ringed: ["media", "timer", "claude", "codex", "battery", "volume",
+    readonly property var ringed: ["media", "timer", "claude", "codex", "opencode", "battery", "volume",
         "brightness", "stats", "pet"]
 
     // A piece's own shape when it has one, the bar's when it does not. A
@@ -239,6 +245,8 @@ Singleton {
             return "󰃭"
         case "codex":
             return "\uf489"
+        case "opencode":
+            return "\uf121"
         }
         return ""
     }
@@ -275,6 +283,8 @@ Singleton {
             return ClaudeService.blockTokens > 0 ? ClaudeService.compact(ClaudeService.blockTokens) : "0%"
         case "codex":
             return CodexService.measured ? `${Math.round(CodexService.gauge * 100)}%` : "—"
+        case "opencode":
+            return OpencodeService.session ? `${Math.round(OpencodeService.session.used * 100)}%` : "—"
         case "stats":
             return `${StatsService.cpu.toFixed(0)}%`
         case "pet":
@@ -336,6 +346,8 @@ Singleton {
             return ClaudeService.measured ? ClaudeService.tint : Theme.indicator
         case "codex":
             return CodexService.tint
+        case "opencode":
+            return OpencodeService.tint
         case "markets":
             return MarketsService.tint(MarketsService.lead)
         }
@@ -536,6 +548,8 @@ Singleton {
             return { width: item.width, height: Theme.cardHeight(AudioService.cardRows, 0) }
         if (id === "codex")
             return { width: item.width, height: Theme.cardHeight(Math.max(1, CodexService.limits.length), 0) }
+        if (id === "opencode")
+            return { width: item.width, height: Theme.cardHeight(Math.max(1, OpencodeService.limits.length), 0) }
         if (id === "brightness")
             return { width: item.width,
                      height: Theme.cardHeight(Math.max(1, BrightnessService.dimmable.length), 0) }
@@ -616,6 +630,9 @@ Singleton {
         case "codex":
             // Only where Codex has written a log with its limits.
             return CodexService.available
+        case "opencode":
+            // Once the account has answered with the plan's windows.
+            return OpencodeService.available
         case "battery":
             return BatteryService.available
         case "volume":
