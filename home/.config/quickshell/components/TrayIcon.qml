@@ -10,10 +10,12 @@
 import QtQuick
 import QtQuick.Effects
 
+import "../services"
+
 // An item names its icon, and the shell's icon theme draws named panel icons
-// dark, for a light bar. Papirus-Dark carries tray icons of its own, light
-// ones, so a named icon is looked up there first and the item's own is the
-// fallback. Either way it is drawn in grey: the drawing inside an icon
+// dark, for a light bar. The system's icon theme may carry tray icons of its
+// own, light ones (Papirus-Dark does), so a named icon is looked up there
+// first (`TrayService.panelIcon`) and the item's own is the fallback. Either way it is drawn in grey: the drawing inside an icon
 // survives, which a flat silhouette of a round icon would not.
 Item {
     id: root
@@ -26,8 +28,7 @@ Item {
         return found ? found[1] : ""
     }
 
-    readonly property string panelIcon: root.named !== ""
-        ? `file:///usr/share/icons/Papirus-Dark/22x22/panel/${root.named}.svg` : ""
+    readonly property string panelIcon: TrayService.panelIcon(root.named)
 
     // Two pictures rather than one that switches its own source on an error,
     // which loops when an item such as nm-applet changes its icon every few

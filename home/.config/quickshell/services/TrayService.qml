@@ -11,6 +11,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.SystemTray
 
 import "../theme"
@@ -36,6 +37,34 @@ Singleton {
     // (`trayHidden`, by item id).
     readonly property var items: root.all
         .filter(item => Array.from(SettingsService.trayHidden ?? []).indexOf(item.id) < 0)
+
+    // ── PANEL ICONS ─────────────────────────────────────────────────────────
+    //
+    // The light tray icons of the system's icon theme (or a theme it
+    // inherits), by name, from `tray_icons.py`. Read once, so a name the theme
+    // lacks — or an absolute path some items send — falls back to the item's
+    // own icon without a failed load.
+    property var panelIcons: ({})
+
+    function panelIcon(name: string): string {
+        return root.panelIcons[name] ?? ""
+    }
+
+    readonly property Process panelIconsProcess: Process {
+        running: true
+        command: [Quickshell.shellPath("scripts/tray_icons.py")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const found = {}
+                for (const path of this.text.split("\n")) {
+                    const name = /([^/]+)\.svg$/.exec(path)
+                    if (name)
+                        found[name[1]] = "file://" + path
+                }
+                root.panelIcons = found
+            }
+        }
+    }
 
     // ── THE OPEN MENU ───────────────────────────────────────────────────────
 
