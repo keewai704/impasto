@@ -219,13 +219,15 @@ Item {
             }
         }
 
-        // The arc is the battery of the first connected device that reports
-        // one; the dots count the connected devices.
+        // The arc is the battery of the first connected Bluetooth device that
+        // reports one (not a USB receiver's mouse); the dots count the
+        // connected devices.
         Component {
             id: bluetoothDuo
 
             DuoGlyph {
-                readonly property var lead: DeviceService.devices.length > 0 ? DeviceService.devices[0] : null
+                readonly property var lead: DeviceService.bluetoothDevices.length > 0
+                    ? DeviceService.bluetoothDevices[0] : null
 
                 arc: lead ? lead.level : 0
                 dots: BluetoothService.enabled ? BluetoothService.connectedDevices.length / 4 : 0

@@ -29,7 +29,7 @@ Singleton {
     readonly property NetworkDevice wifiDevice:
         root.devices.find(device => device.type === DeviceType.Wifi) ?? null
     readonly property NetworkDevice wiredDevice:
-        root.devices.find(device => device.type === DeviceType.Ethernet) ?? null
+        root.devices.find(device => device.type === DeviceType.Wired) ?? null
 
     readonly property bool wifiEnabled: root.radioOn
     readonly property bool wifiConnected: root.wifiDevice !== null && root.wifiDevice.connected
