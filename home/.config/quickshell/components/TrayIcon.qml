@@ -26,7 +26,11 @@ Item {
         return found ? found[1] : ""
     }
 
-    readonly property string panelIcon: root.named !== ""
+    // Some items (fcitx5's Meltype) name their icon by an absolute path,
+    // which the icon provider cannot resolve; those are loaded as files.
+    readonly property bool namedFile: root.named.startsWith("/")
+
+    readonly property string panelIcon: root.named !== "" && !root.namedFile
         ? `file:///usr/share/icons/Papirus-Dark/22x22/panel/${root.named}.svg` : ""
 
     // Two pictures rather than one that switches its own source on an error,
@@ -49,7 +53,7 @@ Item {
         anchors.fill: parent
         sourceSize.width: root.width * 2
         sourceSize.height: root.height * 2
-        source: themed.status === Image.Ready ? "" : root.icon
+        source: themed.status === Image.Ready ? "" : root.namedFile ? `file://${root.named}` : root.icon
         visible: false
     }
 
