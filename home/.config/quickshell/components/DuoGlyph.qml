@@ -3,9 +3,10 @@ import QtQuick.Shapes
 
 import "../theme"
 
-// Two usage windows in one status glyph, laid out like the iPhone Duo's: an
-// arc open at the bottom fills with the shorter window, the four dots in its
-// gap light up with the longer one, and the mark sits in the middle.
+// Two readings in one status glyph, laid out like the iPhone Duo's: an arc
+// open at the bottom fills with one, the four dots in its gap light up with
+// the other, and the mark sits in the middle. Usage windows warn as they fill;
+// a reading where full is good passes its own colours.
 Item {
     id: root
 
@@ -14,6 +15,8 @@ Item {
     property real dots: 0
     property bool dotsKnown: true
     property real thickness: 2.5
+    property color arcColor: root.tintOf(root.clamped)
+    property color dotColor: root.tintOf(root.dots)
 
     default property alias content: centre.data
 
@@ -58,7 +61,7 @@ Item {
 
         ShapePath {
             strokeWidth: root.thickness
-            strokeColor: root.tintOf(root.clamped)
+            strokeColor: root.arcColor
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 
@@ -94,7 +97,7 @@ Item {
             radius: width / 2
             x: root.width / 2 + root.radius * Math.cos(rad) - width / 2
             y: root.height / 2 + root.radius * Math.sin(rad) - height / 2
-            color: index < root.lit ? root.tintOf(root.dots) : Theme.indicatorDim
+            color: index < root.lit ? root.dotColor : Theme.indicatorDim
 
             Behavior on color { ColorAnimation { duration: Theme.durationMedium } }
         }

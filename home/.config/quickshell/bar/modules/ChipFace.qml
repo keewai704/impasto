@@ -38,10 +38,10 @@ Item {
     // capsule outline; alone and closed, it is the capsule.
     property bool alone: false
 
-    // Claude Code and OpenCode Go always wear the two-window status glyph
-    // (`DuoGlyph`), in either shape.
+    // These always wear the two-reading status glyph (`DuoGlyph`), in either
+    // shape.
     readonly property bool duo: root.device === null
-        && (root.moduleId === "claude" || root.moduleId === "opencode")
+        && ["claude", "opencode", "network", "bluetooth"].indexOf(root.moduleId) >= 0
 
     // Only a module that measures has a ring, whatever shape is asked for.
     readonly property bool ring: root.duo || root.shape === "ring"
@@ -155,11 +155,12 @@ Item {
             }
         }
 
-        // The arc is the five-hour window, the dots the week.
+        // For usage the arc is the five-hour window, the dots the week.
         Loader {
             anchors.fill: parent
             active: root.duo
-            sourceComponent: root.moduleId === "claude" ? claudeDuo : opencodeDuo
+            sourceComponent: ({ claude: claudeDuo, opencode: opencodeDuo,
+                network: networkDuo, bluetooth: bluetoothDuo })[root.moduleId] ?? null
         }
 
         Component {
@@ -188,6 +189,56 @@ Item {
                 OpencodeMark {
                     anchors.fill: parent
                     color: Theme.indicator
+                }
+            }
+        }
+
+        // The arc is the Wi-Fi signal, full on a cable that reaches the
+        // internet; the dots are the traffic coming in, a dot per decade
+        // from 10 kB/s.
+        Component {
+            id: networkDuo
+
+            DuoGlyph {
+                readonly property real down: StatsService.networkDown
+
+                arc: NetworkService.wiredConnected ? (NetworkService.online ? 1 : 0)
+                    : NetworkService.strength
+                dots: down >= 1e7 ? 1 : down >= 1e6 ? 0.75 : down >= 1e5 ? 0.5 : down >= 1e4 ? 0.25 : 0
+                arcColor: NetworkService.online ? Theme.indicator : Theme.indicatorWarn
+                dotColor: Theme.indicator
+
+                Text {
+                    anchors.centerIn: parent
+                    text: NetworkService.icon
+                    font.family: Theme.fontMono
+                    font.pixelSize: parent.width
+                    color: NetworkService.wiredConnected || NetworkService.wifiConnected
+                        ? Theme.indicator : Theme.indicatorDim
+                }
+            }
+        }
+
+        // The arc is the battery of the first connected device that reports
+        // one; the dots count the connected devices.
+        Component {
+            id: bluetoothDuo
+
+            DuoGlyph {
+                readonly property var lead: DeviceService.devices.length > 0 ? DeviceService.devices[0] : null
+
+                arc: lead ? lead.level : 0
+                dots: BluetoothService.enabled ? BluetoothService.connectedDevices.length / 4 : 0
+                arcColor: lead && lead.level < 0.2 ? Theme.indicatorBad
+                    : lead && lead.charging ? Theme.indicatorGood : Theme.indicator
+                dotColor: Theme.indicator
+
+                Text {
+                    anchors.centerIn: parent
+                    text: BluetoothService.icon
+                    font.family: Theme.fontMono
+                    font.pixelSize: parent.width
+                    color: BluetoothService.enabled ? Theme.indicator : Theme.indicatorDim
                 }
             }
         }
