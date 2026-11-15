@@ -86,10 +86,12 @@ ShellRoot {
     // nothing is created and nothing is destroyed, so the crossing costs no
     // frame and what is under the pointer is always what answers it. It waits
     // only while a panel is open, since moving then is a panel closing itself.
-    // The primary is the fallback.
+    // The primary is the fallback, and the only one for a primary-only bar.
     property string islandName: MonitorService.effectivePrimaryName
 
     readonly property string wantedIslandName: {
+        if (SettingsService.barScreens === "primary")
+            return MonitorService.effectivePrimaryName
         const focused = HyprlandService.focusedMonitor
         for (const screen of Quickshell.screens)
             if (screen.name === focused)
@@ -108,6 +110,8 @@ ShellRoot {
     // pointer was warped there rather than walked.
     function claimIsland(name: string): void {
         if (name === "" || root.islandName === name || (root.island?.expanded ?? false))
+            return
+        if (SettingsService.barScreens === "primary" && name !== MonitorService.effectivePrimaryName)
             return
         root.islandName = name
     }

@@ -93,16 +93,23 @@ SettingsSection {
             }
 
             SettingRow {
-                label: Tr.t("On every screen")
-                reading: SettingsService.barEverywhere
+                label: Tr.t("Screens")
+                reading: SettingsService.barScreens === "every"
                     ? Tr.t("One on each, and the one you are on is the live one")
-                    : Tr.t("Only on the screen you are on")
+                    : SettingsService.barScreens === "focused"
+                    ? Tr.t("Only on the screen you are on")
+                    : Tr.t("Only on the primary screen")
                 locked: Quickshell.screens.length < 2
                 reason: Tr.t("Only one screen is on")
 
-                ToggleSwitch {
-                    checked: SettingsService.barEverywhere
-                    onToggled: checked => SettingsService.set("barEverywhere", checked)
+                SegmentedControl {
+                    options: [
+                        { id: "every", label: Tr.t("Every") },
+                        { id: "focused", label: Tr.t("Focused") },
+                        { id: "primary", label: Tr.t("Primary") }
+                    ]
+                    current: SettingsService.barScreens
+                    onSelected: id => SettingsService.set("barScreens", id)
                 }
             }
 

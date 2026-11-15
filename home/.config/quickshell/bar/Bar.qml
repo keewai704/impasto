@@ -83,7 +83,7 @@ PanelWindow {
     // Whether this one is drawn at all. The surface is on every screen
     // either way and the reserve is `BarReserve`'s, which never moves, so a
     // desk set to one bar costs no window a re-tile when a hand crosses.
-    readonly property bool painted: root.live || SettingsService.barEverywhere
+    readonly property bool painted: root.live || SettingsService.barScreens === "every"
 
     // The compositor's focus follows the pointer, so by the time anything here
     // is clicked this screen is already the live one. Said outright for the
@@ -467,7 +467,7 @@ PanelWindow {
     // ── THE FACE ────────────────────────────────────────────────────────────
     //
     // Everything this bar draws. The surface stays on every screen whatever
-    // `barEverywhere` says, so the reserve never moves and no window is ever
+    // `barScreens` says, so the reserve never moves and no window is ever
     // re-tiled by a hand crossing; what the setting decides is only whether
     // this is painted. Nothing is built or torn down either way.
     Item {

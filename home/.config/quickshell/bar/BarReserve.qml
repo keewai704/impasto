@@ -29,8 +29,11 @@ PanelWindow {
 
     implicitHeight: 1
     color: "transparent"
-    // Nothing in zen, so the windows take the band.
-    exclusiveZone: SettingsService.barHidden ? 0 : Theme.barReserve
+    // Nothing in zen, so the windows take the band, nor on a screen the
+    // primary-only bar never comes to.
+    exclusiveZone: SettingsService.barHidden
+        || (SettingsService.barScreens === "primary" && !MonitorService.isPrimary(root.screen))
+        ? 0 : Theme.barReserve
 
     // Under everything, and deaf.
     WlrLayershell.layer: WlrLayer.Background

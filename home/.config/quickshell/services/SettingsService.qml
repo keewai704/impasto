@@ -32,7 +32,10 @@ Singleton {
     readonly property alias islandAttached: config.islandAttached
     readonly property alias barSideMargin: config.barSideMargin
     readonly property alias barStyle: config.barStyle
-    readonly property alias barEverywhere: config.barEverywhere
+    // "every", "focused" or "primary"; a desk saved before the choice keeps
+    // what its `barEverywhere` said.
+    readonly property string barScreens: config.barScreens !== "" ? config.barScreens
+        : config.barEverywhere ? "every" : "focused"
     readonly property alias barHidden: config.barHidden
     readonly property alias barAutohide: config.barAutohide
     readonly property alias screenCorners: config.screenCorners
@@ -554,8 +557,10 @@ Singleton {
 
         property int barSideMargin: 18
 
-        // A bar on every screen, or only on the one being worked on. The
-        // surface is on every screen either way: this is whether it paints.
+        // A bar on every screen, only on the one being worked on, or only on
+        // the primary. Surfaces are on every screen whichever: this is where
+        // they paint and, for the primary alone, where the band is kept.
+        property string barScreens: ""
         property bool barEverywhere: true
 
         // Zen: the bar off the screen and its band given to the windows; the

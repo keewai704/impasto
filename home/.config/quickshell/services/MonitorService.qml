@@ -105,12 +105,13 @@ Singleton {
     // the widgets and the note deck. Stored by description, matched to a
     // `ShellScreen` by connector name. Falls back to the first screen, which
     // also covers a primary that was just disabled, since disabled outputs
-    // drop out of `Quickshell.screens`.
+    // drop out of `Quickshell.screens`. No primary chosen matches nothing, not a
+    // headless output, whose description is as empty.
 
     readonly property string primaryDescription: root.arrangement?.primary ?? ""
 
     readonly property string primaryName: {
-        const wanted = root.monitorFor(root.primaryDescription)
+        const wanted = root.primaryDescription !== "" ? root.monitorFor(root.primaryDescription) : null
         return (wanted && !wanted.disabled) ? wanted.name : ""
     }
 

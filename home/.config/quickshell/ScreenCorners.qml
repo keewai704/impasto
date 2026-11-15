@@ -28,7 +28,7 @@ Scope {
     // The bezel's band is the top of the frame: its own ends fill the top
     // corners, and the curve is under them. Only while that band is there.
     readonly property bool topCovered: SettingsService.barStyle === "bezel"
-        && !SettingsService.barHidden && (root.live || SettingsService.barEverywhere)
+        && !SettingsService.barHidden && (root.live || SettingsService.barScreens === "every")
 
     Variants {
         model: [

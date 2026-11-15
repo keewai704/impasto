@@ -697,6 +697,10 @@ QtObject {
             "Zen": "Zen",
             "One on each, all showing the same": "Uno en cada una, todos iguales",
             "Only on the screen you are on": "Solo en la pantalla en la que estás",
+            "Only on the primary screen": "Solo en la pantalla principal",
+            "Every": "Todas",
+            "Focused": "La activa",
+            "Primary": "La principal",
             "One on each, and the one you are on is the live one":
                 "Una en cada una, y la de tu pantalla es la que funciona",
             "Hide until pointed at": "Ocultar hasta apuntarlo",
