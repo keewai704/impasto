@@ -20,6 +20,7 @@ import "./modules"
 import "./island"
 import "./island/controls"
 import "../components"
+import "../bitwarden"
 
 // The island in the middle and the two sides (`SettingsService.barZone`), in
 // one of three styles:
@@ -361,9 +362,12 @@ PanelWindow {
     // restores focus when the grab ends. Both stand down while the capture
     // surface is up, so an open panel waits under it instead of closing, and
     // while the session is locked, where a grab would keep the keyboard from
-    // the other screens' lock.
+    // the other screens' lock. They also stand down while rbw waits on its
+    // pinentry window, which would otherwise never get the keyboard, and a
+    // click into it would clear the grab and close the island.
     readonly property bool holdsKeyboard: root.live && island.expanded
         && !CaptureService.active && !LockService.locked
+        && BitwardenService.view !== "unlocking"
 
     WlrLayershell.keyboardFocus: root.holdsKeyboard
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
