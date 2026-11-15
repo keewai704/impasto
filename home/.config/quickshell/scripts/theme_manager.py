@@ -33,6 +33,8 @@ from urllib.parse import quote
 
 # Sibling module with the greeting's pixel-art scenes.
 import greeting
+# Sibling module that reads the system's icon theme.
+import tray_icons
 
 XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
 XDG_DATA_HOME = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
@@ -275,7 +277,8 @@ QT6CT_COLORS_FILE = os.path.join(QT6CT_DIR, "colors", "impasto.conf")
 # theme.
 QT6CT_STYLE = "Fusion"
 
-# Most of the Qt applications in use are KDE's, which expect Breeze icons.
+# The system's icon theme, as GTK has it; Breeze, which KDE's applications
+# expect, when none is set.
 QT6CT_ICONS = "breeze"
 
 # QPalette roles in Qt's enum order: qt6ct's format is positional. Accent
@@ -1858,7 +1861,7 @@ def build_qt6ct_config():
         "",
         "[Appearance]",
         f"style={QT6CT_STYLE}",
-        f"icon_theme={QT6CT_ICONS}",
+        f"icon_theme={tray_icons.configured_theme() or QT6CT_ICONS}",
         "custom_palette=true",
         f"color_scheme_path={QT6CT_COLORS_FILE}",
         "# Qt's own file dialog rather than the GTK one: a themed dialog on a",
